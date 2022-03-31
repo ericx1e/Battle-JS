@@ -12,24 +12,34 @@ let troopId = 0
 
 let buttons = []
 
+let font
+
+function preload() {
+    font = loadFont("Ubuntu/Ubuntu-Regular.ttf")
+}
+
 function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL)
     canvas.position(0, 0)
     zoom = (height / 2) / tan(PI / 6)
 
     for (let i = 0; i < 2000; i++) {
-        random(0, 1) > 0.5 ? redTroops.push(new Soldier(random(0, width), random(0, height))) : blueTroops.push(new Soldier(random(0, width), random(0, height)))
+        i % 2 == 0 ? redTroops.push(new Soldier(random(0, width), random(0, height))) : blueTroops.push(new Soldier(random(0, width), random(0, height)))
     }
 }
 
 function draw() {
+    // console.log(redTroops.length, blueTroops.length)
     background(51)
     if (canZoom) {
         camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
     }
-    // text('fps: ' + Math.floor(frameRate()), 50, 50)
+    textFont(font)
     push()
     translate(-width / 2, -height / 2)
+    fill(255)
+    text('fps: ' + Math.floor(frameRate()), 50, 50)
+    frameRate(60)
     fill(100)
     noStroke()
     textSize(20)

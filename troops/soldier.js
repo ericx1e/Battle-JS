@@ -20,7 +20,7 @@ function Soldier(x, y) {
         drawSettings(color)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        // sphere(this.size)
+        // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
         }
@@ -54,7 +54,6 @@ function Soldier(x, y) {
     }
 
     this.takeDamage = function (damage) {
-        console.log(damage)
         this.hitpoints -= damage
         this.takingDamageFrames = 20;
         if (this.hitpoints <= 0) {
@@ -70,6 +69,7 @@ function Soldier(x, y) {
             this.pos.add(this.vel)
         }
         this.checkCollision(others)
+        this.checkBoundaries()
         // if (this.isColliding(others)) {
         //     this.pos.sub(this.vel.mult(random(0.5, 3)))
         // }
@@ -90,5 +90,20 @@ function Soldier(x, y) {
             }
         }
         this.pos.add(squeezeVel)
+    }
+
+    this.checkBoundaries = function () {
+        if (this.pos.x > width) {
+            this.pos.add(createVector(-this.size / 2, 0))
+        }
+        if (this.pos.x < 0) {
+            this.pos.add(createVector(this.size / 2, 0))
+        }
+        if (this.pos.y > height) {
+            this.pos.add(createVector(0, -this.size / 2))
+        }
+        if (this.pos.y < 0) {
+            this.pos.add(createVector(0, this.size / 2))
+        }
     }
 }
