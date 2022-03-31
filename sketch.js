@@ -1,5 +1,7 @@
 let redTroops = []
+let redProjectiles = []
 let blueTroops = []
+let blueProjectiles = []
 let panX = 0
 let panY = 0
 let zoom;
@@ -14,12 +16,16 @@ function setup() {
     canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL)
     canvas.position(0, 0)
     zoom = (height / 2) / tan(PI / 6)
+
+    for (let i = 0; i < 2000; i++) {
+        random(0, 1) > 0.5 ? redTroops.push(new Soldier(random(0, width), random(0, height))) : blueTroops.push(new Soldier(random(0, width), random(0, height)))
+    }
 }
 
 function draw() {
     background(51)
     if (canZoom) {
-        camera(-panX, -panY, zoom, -panX, -panY, 0, 0, 1, 0)
+        camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
     }
     // text('fps: ' + Math.floor(frameRate()), 50, 50)
     push()
@@ -35,18 +41,6 @@ function draw() {
     rectMode(CENTER)
     rect(width / 2, height / 2, width, height)
 
-    for (let i = 0; i < redTroops.length; i++) {
-        troop = redTroops[i];
-        troop.show('red')
-        if (battling) {
-            troop.update(redTroops, blueTroops)
-            if (troop.isDead) {
-                redTroops.splice(i, 1)
-                i--
-            }
-        }
-    }
-
     for (let i = 0; i < blueTroops.length; i++) {
         troop = blueTroops[i];
         troop.show('blue')
@@ -58,7 +52,35 @@ function draw() {
             }
         }
     }
+
+    updateProjectiles(blueProjectiles, redTroops)
+    for (let i = 0; i < redTroops.length; i++) {
+        troop = redTroops[i];
+        troop.show('red')
+        if (battling) {
+            troop.update(redTroops, blueTroops)
+            if (troop.isDead) {
+                redTroops.splice(i, 1)
+                i--
+            }
+        }
+    }
+    updateProjectiles(redProjectiles, blueTroops)
+
+
     pop()
+}
+
+function updateProjectiles(projectiles, troops) {
+    for (let i = 0; i < projectiles.length; i++) {
+        projectile.show()
+        if (battling) {
+            if (projectile.move(troops)) {
+                projectiles.splice(i, 1)
+                i--
+            }
+        }
+    }
 }
 
 let panning = false
@@ -78,10 +100,10 @@ function mouseDragged() {
 function mouseReleased() {
     if (!panning) {
         if (mouseX < width / 2) {
-            redTroops.push(new Archer(mouseX, mouseY))
+            // redTroops.push(new Archer(mouseX, mouseY, redProjectiles))
             redTroops.push(new Soldier(mouseX, mouseY))
         } else {
-            blueTroops.push(new Archer(mouseX, mouseY))
+            // blueTroops.push(new Archer(mouseX, mouseY, blueProjectiles))
             blueTroops.push(new Soldier(mouseX, mouseY))
         }
     }
