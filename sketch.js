@@ -23,7 +23,7 @@ function setup() {
     canvas.position(0, 0)
     zoom = (height / 2) / tan(PI / 6)
 
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 500; i++) {
         i % 2 == 0 ? redTroops.push(new Soldier(random(0, width), random(0, height))) : blueTroops.push(new Soldier(random(0, width), random(0, height)))
     }
 }
@@ -37,9 +37,6 @@ function draw() {
     textFont(font)
     push()
     translate(-width / 2, -height / 2)
-    fill(255)
-    text('fps: ' + Math.floor(frameRate()), 50, 50)
-    frameRate(60)
     fill(100)
     noStroke()
     textSize(20)
@@ -78,6 +75,14 @@ function draw() {
     updateProjectiles(redProjectiles, blueTroops)
 
 
+    fill(255)
+    text('fps: ' + Math.floor(frameRate()), 50, 50)
+
+    fill(255)
+    text(redTroops.length, width / 4, height / 2)
+
+    fill(255)
+    text(blueTroops.length, width * 3 / 4, height / 2)
     pop()
 }
 

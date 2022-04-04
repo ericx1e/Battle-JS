@@ -4,7 +4,9 @@ function Soldier(x, y) {
     this.size = width / 100
     this.speed = this.size / 10;
     this.target = this
-    this.hitpoints = 100
+    this.maxHitpoints = 100
+    this.hitpoints = this.maxHitpoints
+    this.targetHitpoints = this.hitpoints
     this.attackPower = 10
     this.attackSpeed = 80 //number of frames between attacks
     this.attackRange = this.size * 1.5
@@ -17,13 +19,28 @@ function Soldier(x, y) {
     this.show = function (color) {
         push()
         translate(this.pos.x, this.pos.y)
+
+        /*
+        strokeWeight(width / 500)
+        stroke(150)
+        line(-this.size, -this.size, this.size, -this.size)
+        colorMode(HSB, this.maxHitpoints, 255, 255, 255)
+        stroke(30 * this.hitpoints / this.maxHitpoints, 255, 255)
+        line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
+        */
+
         drawSettings(color)
+        noFill()
+        arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        drawSettings(color)
+        noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
         }
+
         pop()
     }
 
@@ -47,7 +64,14 @@ function Soldier(x, y) {
             }
             // this.checkCollision(allies.concat(foes))
         }
+
+        // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
+
+        if (this.hitpoints <= 0) {
+            this.isDead = true
+        }
     }
+
 
     this.attack = function () {
         this.target.takeDamage(this.attackPower)
@@ -55,10 +79,8 @@ function Soldier(x, y) {
 
     this.takeDamage = function (damage) {
         this.hitpoints -= damage
-        this.takingDamageFrames = 20;
-        if (this.hitpoints <= 0) {
-            this.isDead = true
-        }
+        // this.targetHitpoints -= damage
+        // this.takingDamageFrames = 20;
     }
 
     this.move = function (others) {
