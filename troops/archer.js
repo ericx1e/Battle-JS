@@ -1,29 +1,59 @@
-function Archer(x, y, arrows) {
+function Archer(x, y, team) {
+    this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
+
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
     this.speed = this.size / 10;
     this.target = this
-    this.hitpoints = 50
+    this.maxHitpoints = 50
+    this.hitpoints = this.maxHitpoints
+    this.targetHitpoints = this.hitpoints
     this.attackPower = 0
-    this.attackSpeed = 80 //number of frames between attacks
-    this.attackRange = this.size * 25
+    this.attackSpeed = 100 //number of frames between attacks
+    this.attackRange = this.size * 30
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
     this.takingDamageFrames = 0 //animation for getting hit
 
     this.isDead = false
 
-    this.show = function (color) {
+    this.show = function () {
         push()
         translate(this.pos.x, this.pos.y)
-        drawSettings(color)
+
+        if (healthBars) {
+            strokeWeight(width / 500)
+            stroke(150)
+            line(-this.size, -this.size, this.size, -this.size)
+            colorMode(HSB, this.maxHitpoints, 255, 255, 255)
+            stroke(30 * this.hitpoints / this.maxHitpoints, 255, 255)
+            line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
+        }
+
+        drawSettings(team)
+        noFill()
+        arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        drawSettings(team)
+        noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        line(this.size / 2, -this.size / 1.5, this.size / 2, this.size / 1.5)
+        drawSettings(team)
+        noFill();
+        beginShape();
+        vertex(this.size / 2, -this.size / 1.2);
+        vertex(this.size / 2, this.size / 1.2);
+        vertex(this.size / 1.4, this.size / 3.5);
+        vertex(this.size / 1.4, -this.size / 3.5);
+        vertex(this.size / 2, -this.size / 1.2);
+        endShape();
+        // quad(this.size / 2, -this.size / 1.2, this.size / 2, this.size / 1.2, this.size / 1.5, this.size / 3, this.size / 1.5, -this.size / 3);
+
+        // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
         }
+
         pop()
     }
 
@@ -47,29 +77,35 @@ function Archer(x, y, arrows) {
             }
             // this.checkCollision(allies.concat(foes))
         }
-    }
 
-    this.attack = function () {
-        arrows.push(new Arrow(this.x + this.size / 2 * cos(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x)), this.y + this.size / 2 * sin(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))))
-    }
+        // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
 
-    this.takeDamage = function (damage) {
-        console.log(damage)
-        this.hitpoints -= damage
-        this.takingDamageFrames = 20;
         if (this.hitpoints <= 0) {
             this.isDead = true
         }
     }
 
+
+    this.attack = function () {
+        // this.target.takeDamage(this.attackPower)
+        this.projectiles.push(new Arrow(this.pos, this.target.pos, team))
+    }
+
+    this.takeDamage = function (damage) {
+        this.hitpoints -= damage
+        // this.targetHitpoints -= damage
+        // this.takingDamageFrames = 20;
+    }
+
     this.move = function (others) {
-        if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) > (this.attackRange * this.attackRange) * (0.95 * 0.95)) {
+        if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) > (this.attackRange * this.attackRange) * (0.9 * 0.9)) {
             this.vel = p5.Vector.sub(this.target.pos, this.pos).limit(this.speed)
             // stroke(255)
             // line(this.pos.x, this.pos.y, this.pos.x + this.vel.x * 15, this.pos.y + this.vel.y * 15);
             this.pos.add(this.vel)
         }
         this.checkCollision(others)
+        this.checkBoundaries()
         // if (this.isColliding(others)) {
         //     this.pos.sub(this.vel.mult(random(0.5, 3)))
         // }
@@ -90,5 +126,20 @@ function Archer(x, y, arrows) {
             }
         }
         this.pos.add(squeezeVel)
+    }
+
+    this.checkBoundaries = function () {
+        if (this.pos.x > width) {
+            this.pos.add(createVector(-this.size / 2, 0))
+        }
+        if (this.pos.x < 0) {
+            this.pos.add(createVector(this.size / 2, 0))
+        }
+        if (this.pos.y > height) {
+            this.pos.add(createVector(0, -this.size / 2))
+        }
+        if (this.pos.y < 0) {
+            this.pos.add(createVector(0, this.size / 2))
+        }
     }
 }

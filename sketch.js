@@ -7,6 +7,7 @@ let panY = 0
 let zoom;
 let battling = false
 let canZoom = false
+let healthBars = false
 
 let troopId = 0
 
@@ -23,8 +24,21 @@ function setup() {
     canvas.position(0, 0)
     zoom = (height / 2) / tan(PI / 6)
 
-    for (let i = 0; i < 500; i++) {
-        i % 2 == 0 ? redTroops.push(new Soldier(random(0, width), random(0, height))) : blueTroops.push(new Soldier(random(0, width), random(0, height)))
+    // for (let i = 0; i < 500; i++) {
+    //     i % 2 == 0 ? redTroops.push(new Soldier(random(0, width), random(0, height), 'red')) : blueTroops.push(new Soldier(random(0, width), random(0, height), 'blue'))
+    //     i % 2 == 0 ? redTroops.push(new Archer(random(0, width), random(0, height), 'red')) : blueTroops.push(new Archer(random(0, width), random(0, height), 'blue'))
+    // }
+
+    for (let i = 20; i < width / 2; i += 40) {
+        for (let j = 20; j < height; j += 40) {
+            if (i <= 20) {
+                blueTroops.push(new Archer(width - i, j, 'blue'))
+                redTroops.push(new Archer(i, j, 'red'))
+            } else {
+                blueTroops.push(new Soldier(width - i, j, 'blue'))
+                redTroops.push(new Soldier(i, j, 'red'))
+            }
+        }
     }
 }
 
@@ -48,30 +62,50 @@ function draw() {
     rectMode(CENTER)
     rect(width / 2, height / 2, width, height)
 
-    for (let i = 0; i < blueTroops.length; i++) {
-        troop = blueTroops[i];
-        troop.show('blue')
-        if (battling) {
-            troop.update(blueTroops, redTroops)
-            if (troop.isDead) {
-                blueTroops.splice(i, 1)
-                i--
+    let bi = 0;
+    let ri = 0;
+    let blueToRemove = []
+    let redToRemove = []
+    while (blueTroops[bi] || redTroops[ri]) {
+        let blueTroop = blueTroops[bi]
+        let redTroop = redTroops[ri]
+
+        if (blueTroop) {
+            blueTroop.show()
+            if (battling) {
+                blueTroop.update(blueTroops, redTroops)
+                if (blueTroop.isDead) {
+                    blueToRemove.push(bi)
+                    // blueTroops.splice(bi, 1)
+                    // bi--
+                }
             }
         }
+        if (redTroop) {
+            redTroop.show()
+            if (battling) {
+                redTroop.update(redTroops, blueTroops)
+                if (redTroop.isDead) {
+                    redToRemove.push(ri)
+                    // redTroops.splice(ri, 1)
+                    // ri--
+                }
+            }
+        }
+
+        bi++;
+        ri++;
+    }
+
+    for (let i = blueToRemove.length - 1; i >= 0; i--) { //backwards to not mess up index while splicing
+        blueTroops.splice(blueToRemove[i], 1)
+    }
+
+    for (let i = redToRemove.length - 1; i >= 0; i--) {
+        redTroops.splice(redToRemove[i], 1)
     }
 
     updateProjectiles(blueProjectiles, redTroops)
-    for (let i = 0; i < redTroops.length; i++) {
-        troop = redTroops[i];
-        troop.show('red')
-        if (battling) {
-            troop.update(redTroops, blueTroops)
-            if (troop.isDead) {
-                redTroops.splice(i, 1)
-                i--
-            }
-        }
-    }
     updateProjectiles(redProjectiles, blueTroops)
 
 
@@ -88,6 +122,7 @@ function draw() {
 
 function updateProjectiles(projectiles, troops) {
     for (let i = 0; i < projectiles.length; i++) {
+        projectile = projectiles[i]
         projectile.show()
         if (battling) {
             if (projectile.move(troops)) {
@@ -116,10 +151,10 @@ function mouseReleased() {
     if (!panning) {
         if (mouseX < width / 2) {
             // redTroops.push(new Archer(mouseX, mouseY, redProjectiles))
-            redTroops.push(new Soldier(mouseX, mouseY))
+            redTroops.push(new Soldier(mouseX, mouseY, 'red'))
         } else {
             // blueTroops.push(new Archer(mouseX, mouseY, blueProjectiles))
-            blueTroops.push(new Soldier(mouseX, mouseY))
+            blueTroops.push(new Soldier(mouseX, mouseY, 'blue'))
         }
     }
     panning = false

@@ -1,4 +1,4 @@
-function Soldier(x, y) {
+function Soldier(x, y, team) {
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
@@ -8,7 +8,7 @@ function Soldier(x, y) {
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 10
-    this.attackSpeed = 80 //number of frames between attacks
+    this.attackSpeed = 40 //number of frames between attacks
     this.attackRange = this.size * 1.5
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
@@ -16,24 +16,24 @@ function Soldier(x, y) {
 
     this.isDead = false
 
-    this.show = function (color) {
+    this.show = function () {
         push()
         translate(this.pos.x, this.pos.y)
 
-        /*
-        strokeWeight(width / 500)
-        stroke(150)
-        line(-this.size, -this.size, this.size, -this.size)
-        colorMode(HSB, this.maxHitpoints, 255, 255, 255)
-        stroke(30 * this.hitpoints / this.maxHitpoints, 255, 255)
-        line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
-        */
+        if (healthBars) {
+            strokeWeight(width / 500)
+            stroke(150)
+            line(-this.size, -this.size, this.size, -this.size)
+            colorMode(HSB, this.maxHitpoints, 255, 255, 255)
+            stroke(30 * this.hitpoints / this.maxHitpoints, 255, 255)
+            line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
+        }
 
-        drawSettings(color)
+        drawSettings(team)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        drawSettings(color)
+        drawSettings(team)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         // sphere(this.size / 2)
@@ -57,7 +57,7 @@ function Soldier(x, y) {
             }
         })
 
-        this.move(allies.concat(foes))
+        this.move(foes.concat(allies))
         if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) < this.attackRange * this.attackRange) {
             if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
@@ -106,7 +106,7 @@ function Soldier(x, y) {
             }
             let minDist = this.size / 2 + other.size / 2
             if (distSquared(this.pos.x, this.pos.y, other.pos.x, other.pos.y) < minDist * minDist) {
-                let moveVector = p5.Vector.sub(this.pos, other.pos).limit(this.speed * 0.5)
+                let moveVector = p5.Vector.sub(this.pos, other.pos).limit(this.speed * random(0.4, 0.5))
                 squeezeVel.add(moveVector)
                 other.pos.sub(moveVector)
             }
