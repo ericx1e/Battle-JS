@@ -1,18 +1,19 @@
-function Soldier(x, y, team) {
-    this.name = 'soldier'
+function Zombie(x, y, team) {
+    this.name = 'zombie'
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
-    this.size = width / 100
-    this.speed = this.size / 10;
+    this.size = width / 150
+    this.speed = this.size / 15;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 100
-    this.hitpoints = this.maxHitpoints
+    this.maxHitpoints = 20
+    this.hitpoints = 0
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 10
+    this.attackPower = 7
     this.attackSpeed = 40 //number of frames between attacks
     this.attackRange = this.size * 1.5
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+    this.spawnFrame = frameCount
 
     this.takingDamageFrames = 0 //animation for getting hit
 
@@ -53,6 +54,15 @@ function Soldier(x, y, team) {
             this.target = this
             return
         }
+        if (frameCount - this.spawnFrame < this.maxHitpoints * 4) {
+            this.hitpoints += 0.25
+            if (this.hitpoints <= 0) {
+                this.isDead = true
+            }
+            return
+        }
+
+        this.hitpoints *= 0.999
 
         if (this.speed < this.maxSpeed) {
             this.speed += this.maxSpeed / 100
@@ -60,10 +70,8 @@ function Soldier(x, y, team) {
 
         this.target = foes[0]
         foes.forEach(foe => {
-            if (!foe.isDead) {
-                if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
-                    this.target = foe
-                }
+            if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
+                this.target = foe
             }
         })
 

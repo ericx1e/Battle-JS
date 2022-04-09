@@ -1,17 +1,19 @@
-function Soldier(x, y, team) {
-    this.name = 'soldier'
+function EWizard(x, y, team) {
+    this.name = 'ewizard'
+    this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
+
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
-    this.speed = this.size / 10;
+    this.speed = this.size / 15;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 100
+    this.maxHitpoints = 50
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 10
-    this.attackSpeed = 40 //number of frames between attacks
-    this.attackRange = this.size * 1.5
+    this.attackPower = 0
+    this.attackSpeed = 200 //number of frames between attacks
+    this.attackRange = this.size * 30
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
     this.takingDamageFrames = 0 //animation for getting hit
@@ -38,6 +40,17 @@ function Soldier(x, y, team) {
         drawSettings(team)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
+        drawSettings(team)
+        noFill();
+        beginShape();
+        vertex(this.size / 2, -this.size / 1.2);
+        vertex(this.size / 2, this.size / 1.2);
+        // vertex(this.size / 1.4, this.size / 3.5);
+        // vertex(this.size / 1.4, -this.size / 3.5);
+        vertex(this.size / 2, -this.size / 1.2);
+        endShape();
+        // quad(this.size / 2, -this.size / 1.2, this.size / 2, this.size / 1.2, this.size / 1.5, this.size / 3, this.size / 1.5, -this.size / 3);
+
         // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
@@ -67,7 +80,7 @@ function Soldier(x, y, team) {
             }
         })
 
-        this.move(foes.concat(allies))
+        this.move(allies.concat(foes))
         if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) < this.attackRange * this.attackRange) {
             if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
@@ -84,7 +97,8 @@ function Soldier(x, y, team) {
 
 
     this.attack = function () {
-        this.target.takeDamage(this.attackPower)
+        // this.target.takeDamage(this.attackPower)
+        this.projectiles.push(new Bolt(this.pos, this.target.pos, team))
     }
 
     this.takeDamage = function (damage) {
@@ -118,7 +132,7 @@ function Soldier(x, y, team) {
             }
             let minDist = this.size / 2 + other.size / 2
             if (distSquared(this.pos.x, this.pos.y, other.pos.x, other.pos.y) < minDist * minDist) {
-                let moveVector = p5.Vector.sub(this.pos, other.pos).limit(this.speed * random(0.4, 0.5))
+                let moveVector = p5.Vector.sub(this.pos, other.pos).limit(this.speed * 0.5)
                 squeezeVel.add(moveVector)
                 other.pos.sub(moveVector)
             }

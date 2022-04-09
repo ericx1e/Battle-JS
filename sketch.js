@@ -1,7 +1,12 @@
 let redTroops = []
+let redToRemove = []
 let redProjectiles = []
+let redForces = []
 let blueTroops = []
+let blueToRemove = []
 let blueProjectiles = []
+let blueForces = []
+
 let panX = 0
 let panY = 0
 let zoom;
@@ -29,8 +34,8 @@ function setup() {
     //     i % 2 == 0 ? redTroops.push(new Archer(random(0, width), random(0, height), 'red')) : blueTroops.push(new Archer(random(0, width), random(0, height), 'blue'))
     // }
 
-    for (let i = 20; i < width / 2; i += 40) {
-        for (let j = 20; j < height; j += 40) {
+    for (let i = 20; i < width / 2; i += 60) {
+        for (let j = 20; j < height; j += 60) {
             if (i <= 20) {
                 blueTroops.push(new Archer(width - i, j, 'blue'))
                 redTroops.push(new Archer(i, j, 'red'))
@@ -40,10 +45,13 @@ function setup() {
             }
         }
     }
+
+    redTroops.push(new Necromancer(0, height / 2, 'red'), new Summoner(1, height / 2, 'red'), new EWizard(3, height / 2, 'red'))
+    blueTroops.push(new Necromancer(width, height / 2, 'blue'), new Summoner(width - 1, height / 2, 'blue'), new EWizard(width - 3, height / 2, 'blue'))
+
 }
 
 function draw() {
-    // console.log(redTroops.length, blueTroops.length)
     background(51)
     if (canZoom) {
         camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
@@ -64,45 +72,109 @@ function draw() {
 
     let bi = 0;
     let ri = 0;
-    let blueToRemove = []
-    let redToRemove = []
+
+    // blueToRemove = []
+    // redToRemove = []
+
+    let blueHasNecro = false
+    let redHasNecro = false
+
     while (blueTroops[bi] || redTroops[ri]) {
         let blueTroop = blueTroops[bi]
         let redTroop = redTroops[ri]
 
         if (blueTroop) {
+            if (blueTroop.name == 'necromancer') {
+                blueHasNecro = true
+            }
             blueTroop.show()
             if (battling) {
-                blueTroop.update(blueTroops, redTroops)
+                let removed = blueTroop.update(blueTroops, redTroops)
                 if (blueTroop.isDead) {
-                    blueToRemove.push(bi)
-                    // blueTroops.splice(bi, 1)
-                    // bi--
+                    if (blueToRemove.includes(blueTroop)) {
+                        blueTroop.size *= 0.999
+
+                    } else {
+                        blueToRemove.push(blueTroop)
+                    }
+                }
+                if (blueTroop.name == 'necromancer' && removed) {
+                    bi -= removed
                 }
             }
         }
         if (redTroop) {
+            if (redTroop.name == 'necromancer') {
+                redHasNecro = true
+            }
             redTroop.show()
             if (battling) {
-                redTroop.update(redTroops, blueTroops)
+                let removed = redTroop.update(redTroops, blueTroops)
                 if (redTroop.isDead) {
-                    redToRemove.push(ri)
-                    // redTroops.splice(ri, 1)
-                    // ri--
+                    if (redToRemove.includes(redTroop)) {
+                        redTroop.size *= 0.999
+                    } else {
+                        redToRemove.push(redTroop)
+                    }
+                }
+                if (redTroop.name == 'necromancer' && removed) {
+                    ri -= removed
                 }
             }
         }
+
 
         bi++;
         ri++;
     }
 
-    for (let i = blueToRemove.length - 1; i >= 0; i--) { //backwards to not mess up index while splicing
-        blueTroops.splice(blueToRemove[i], 1)
+    for (let i = 0; i < blueForces.length; i++) {
+        let force = blueForces[i]
+        force.update(redTroops)
+        if (force.isDone) {
+            blueForces.splice(i, 1)
+        }
     }
 
-    for (let i = redToRemove.length - 1; i >= 0; i--) {
-        redTroops.splice(redToRemove[i], 1)
+    for (let i = 0; i < redForces.length; i++) {
+        let force = redForces[i]
+        force.update(blueTroops)
+        if (force.isDone) {
+            redForces.splice(i, 1)
+        }
+    }
+
+    for (let i = 0; i < blueToRemove.length; i++) { //backwards to not mess up index while splicing
+        let toRemove = blueToRemove[i]
+        let index = blueTroops.indexOf(toRemove)
+        if (index == -1) {
+            // toRemove.splice(i, 1)
+            // i--
+            continue
+        }
+        if (blueHasNecro && toRemove.name != 'zombie' && toRemove.name != 'necromancer') {
+            continue
+        }
+        blueTroops.splice(index, 1)
+        i--
+        blueToRemove.splice(i, 1)
+        // i--
+    }
+
+    for (let i = 0; i < redToRemove.length; i++) {
+        let toRemove = redToRemove[i]
+        let index = redTroops.indexOf(toRemove)
+        if (index == -1) {
+            // toRemove.splice(i, 1)
+            // i--
+            continue
+        }
+        if (redHasNecro && toRemove.name != 'zombie' && toRemove.name != 'necromancer') {
+            continue
+        }
+        redTroops.splice(index, 1)
+        i--
+        redToRemove.splice(i, 1)
     }
 
     updateProjectiles(blueProjectiles, redTroops)
@@ -149,12 +221,35 @@ function mouseDragged() {
 
 function mouseReleased() {
     if (!panning) {
+        let team
         if (mouseX < width / 2) {
-            // redTroops.push(new Archer(mouseX, mouseY, redProjectiles))
-            redTroops.push(new Soldier(mouseX, mouseY, 'red'))
+            team = 'red'
         } else {
-            // blueTroops.push(new Archer(mouseX, mouseY, blueProjectiles))
-            blueTroops.push(new Soldier(mouseX, mouseY, 'blue'))
+            team = 'blue'
+        }
+
+        let troop
+
+        switch (key) {
+            case '1':
+                troop = new Soldier(mouseX, mouseY, team)
+                break
+            case '2':
+                troop = new Archer(mouseX, mouseY, team)
+                break
+            case '3':
+                troop = new Necromancer(mouseX, mouseY, team)
+                break
+            case '4':
+                troop = new Summoner(mouseX, mouseY, team)
+                break
+            case '5':
+                troop = new EWizard(mouseX, mouseY, team)
+                break
+        }
+
+        if (troop) {
+            team == 'red' ? redTroops.push(troop) : blueTroops.push(troop)
         }
     }
     panning = false
@@ -180,6 +275,10 @@ function keyTyped() {
     if (key == 'c') {
         redTroops = []
         blueTroops = []
+        redProjectiles = []
+        blueProjectiles = []
+        blueToRemove = []
+        redToRemove = []
         battling = false;
     }
 }

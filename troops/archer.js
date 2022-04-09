@@ -1,10 +1,12 @@
 function Archer(x, y, team) {
+    this.name = 'archer'
     this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
     this.speed = this.size / 10;
+    this.maxSpeed = this.speed;
     this.target = this
     this.maxHitpoints = 50
     this.hitpoints = this.maxHitpoints
@@ -58,15 +60,23 @@ function Archer(x, y, team) {
     }
 
     this.update = function (allies, foes) {
+        if (this.isDead) return
+
         if (foes.length == 0) {
             this.target = this
             return
         }
 
+        if (this.speed < this.maxSpeed) {
+            this.speed += this.maxSpeed / 100
+        }
+
         this.target = foes[0]
         foes.forEach(foe => {
-            if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
-                this.target = foe
+            if (!foe.isDead) {
+                if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
+                    this.target = foe
+                }
             }
         })
 
@@ -93,6 +103,7 @@ function Archer(x, y, team) {
 
     this.takeDamage = function (damage) {
         this.hitpoints -= damage
+        this.hitpoints = Math.max(this.hitpoints, 0)
         // this.targetHitpoints -= damage
         // this.takingDamageFrames = 20;
     }
@@ -115,6 +126,7 @@ function Archer(x, y, team) {
         let squeezeVel = createVector(0, 0)
         for (let i = 0; i < others.length; i++) {
             other = others[i];
+            if (other.isDead) continue
             if (other == this) {
                 continue
             }

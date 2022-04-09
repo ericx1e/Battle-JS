@@ -1,18 +1,22 @@
-function Soldier(x, y, team) {
-    this.name = 'soldier'
+function Necromancer(x, y, team) {
+    this.name = 'necromancer'
+    this.allies = team == 'red' ? redTroops : blueTroops
+    this.toRemove = team == 'red' ? redToRemove : blueToRemove
+
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
-    this.speed = this.size / 10;
+    this.speed = this.size / 20;
     this.maxSpeed = this.speed;
     this.target = this
     this.maxHitpoints = 100
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 10
-    this.attackSpeed = 40 //number of frames between attacks
-    this.attackRange = this.size * 1.5
+    this.attackPower = 0
+    this.attackSpeed = 1 //number of frames between attacks
+    this.attackRange = this.size * 15
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+    // this.drawSpeed = this.size * 2
 
     this.takingDamageFrames = 0 //animation for getting hit
 
@@ -34,10 +38,27 @@ function Soldier(x, y, team) {
         drawSettings(team)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
-        rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        // rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
         drawSettings(team)
         noStroke()
+        rectMode(CENTER)
+        // rect(0, 0, this.size, this.size);
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
+
+        drawSettings(team)
+        noFill();
+        beginShape();
+        vertex(this.size / 2, -this.size / 2);
+        vertex(this.size / 2, -this.size / 1.3);
+        vertex(this.size / 4, -this.size / 1.5);
+        vertex(0, -this.size / 1.1);
+        vertex(-this.size / 4, -this.size / 1.5);
+        vertex(-this.size / 2, -this.size / 1.3);
+        vertex(-this.size / 2, -this.size / 2);
+        vertex(this.size / 2, -this.size / 2);
+        endShape();
+
+
         // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
@@ -48,7 +69,6 @@ function Soldier(x, y, team) {
 
     this.update = function (allies, foes) {
         if (this.isDead) return
-
         if (foes.length == 0) {
             this.target = this
             return
@@ -67,29 +87,55 @@ function Soldier(x, y, team) {
             }
         })
 
-        this.move(foes.concat(allies))
-        if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) < this.attackRange * this.attackRange) {
-            if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
-                this.attack();
-            }
-            // this.checkCollision(allies.concat(foes))
-        }
+        let removed = 0
 
+        this.move(foes.concat(allies))
+        if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+            removed = this.attack();
+        }
         // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
 
         if (this.hitpoints <= 0) {
+            for (let i = 0; i < 10; i++) {
+                this.allies.push(new Zombie(this.pos.x + random(-this.size, this.size), this.pos.y + random(-this.size, this.size), team))
+            }
             this.isDead = true
+        }
+
+        if (removed > 0) {
+            return removed
         }
     }
 
 
     this.attack = function () {
-        this.target.takeDamage(this.attackPower)
+        let removed = 0
+        for (let i = 0; i < this.toRemove.length; i++) {
+            let subject = this.toRemove[i]
+            let index = this.allies.indexOf(subject)
+            if (!subject || index == -1) {
+                continue
+            }
+            subject.vel = p5.Vector.sub(this.pos, subject.pos)
+            let dist = distSquared(this.pos.x, this.pos.y, subject.pos.x, subject.pos.y)
+            subject.vel.setMag(width * 40 / dist)
+            subject.pos.add(subject.vel)
+
+
+            let r = this.size * this.size * 10
+            if (dist < r && subject.name != 'zombie') {
+                this.allies.splice(index, 1)
+                removed++
+                this.toRemove.splice(index, 1)
+                i--
+                this.allies.push(new Zombie(subject.pos.x, subject.pos.y, team))
+            }
+        }
+        return removed
     }
 
     this.takeDamage = function (damage) {
         this.hitpoints -= damage
-        this.hitpoints = Math.max(this.hitpoints, 0)
         // this.targetHitpoints -= damage
         // this.takingDamageFrames = 20;
     }
