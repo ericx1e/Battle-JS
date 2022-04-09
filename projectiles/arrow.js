@@ -6,7 +6,7 @@ function Arrow(start, target, team) {
     this.vel.rotate(random(-0.1, 0.1))
     let drawVec = createVector(this.vel.x, this.vel.y).setMag(this.size)
     this.pos.add(p5.Vector.mult(drawVec, 2))
-    this.damage = 15
+    this.damage = 20
 
     this.show = function () {
         drawSettings(team)

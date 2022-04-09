@@ -3,8 +3,8 @@ function Arc(target, team) {
 
     this.target = target
     this.nextTarget;
-    this.charges = 8
-    this.damage = 30
+    this.charges = 10
+    this.damage = 35
     this.range = width / 50
 
     this.isDone
@@ -50,7 +50,11 @@ function Arc(target, team) {
         this.target.speed = 0
         this.target.takeDamage(this.damage)
         this.hit.push(this.target)
+        if (this.target.name == 'zombie') {
+            this.charges -= 0.5
+        } else {
+            this.charges--
+        }
         this.target = this.nextTarget
-        this.charges--
     }
 }

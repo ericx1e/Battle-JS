@@ -12,7 +12,7 @@ function Summoner(x, y, team) {
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 0
-    this.attackSpeed = 50 //number of frames between attacks
+    this.attackSpeed = 90 //number of frames between attacks
     this.attackRange = this.size * 15
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
     // this.drawSpeed = this.size * 2

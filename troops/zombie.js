@@ -7,7 +7,7 @@ function Zombie(x, y, team) {
     this.maxSpeed = this.speed;
     this.target = this
     this.maxHitpoints = 20
-    this.hitpoints = 0
+    this.hitpoints = 0.25
     this.targetHitpoints = this.hitpoints
     this.attackPower = 7
     this.attackSpeed = 40 //number of frames between attacks
@@ -54,11 +54,11 @@ function Zombie(x, y, team) {
             this.target = this
             return
         }
-        if (frameCount - this.spawnFrame < this.maxHitpoints * 4) {
-            this.hitpoints += 0.25
+        if (frameCount - this.spawnFrame < this.maxHitpoints * 4 - 1) {
             if (this.hitpoints <= 0) {
                 this.isDead = true
             }
+            this.hitpoints += 0.25
             return
         }
 
