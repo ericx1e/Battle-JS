@@ -1,3 +1,5 @@
+p5.disableFriendlyErrors = true;
+
 let redTroops = []
 let redToRemove = []
 let redProjectiles = []
@@ -16,6 +18,7 @@ let healthBars = false
 
 let troopId = 0
 
+let menuOpen = false;
 let buttons = []
 
 let font
@@ -25,7 +28,7 @@ function preload() {
 }
 
 function setup() {
-    canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL)
+    canvas = createCanvas(window.innerWidth, window.innerHeight)
     canvas.position(0, 0)
     zoom = (height / 2) / tan(PI / 6)
 
@@ -49,6 +52,7 @@ function setup() {
     redTroops.push(new Necromancer(0, height / 2, 'red'), new Summoner(1, height / 2, 'red'), new EWizard(3, height / 2, 'red'))
     blueTroops.push(new Necromancer(width, height / 2, 'blue'), new Summoner(width - 1, height / 2, 'blue'), new EWizard(width - 3, height / 2, 'blue'))
 
+    menu = new Menu()
 }
 
 function draw() {
@@ -57,8 +61,6 @@ function draw() {
         camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
     }
     textFont(font)
-    push()
-    translate(-width / 2, -height / 2)
     fill(100)
     noStroke()
     textSize(20)
@@ -181,6 +183,7 @@ function draw() {
     updateProjectiles(redProjectiles, blueTroops)
 
 
+    noStroke()
     fill(255)
     text('fps: ' + Math.floor(frameRate()), 50, 50)
 
@@ -189,7 +192,24 @@ function draw() {
 
     fill(255)
     text(blueTroops.length, width * 3 / 4, height / 2)
-    pop()
+
+    if (!menuOpen && mouseX < menu.w / 8) {
+        menu.showBit()
+        if (mouseX < menu.w / 16 && mouseIsPressed) {
+            menuOpen = true
+        }
+    }
+    if (menuOpen && mouseX > menu.w * 1.5) {
+        menuOpen = false
+    }
+
+    if (menuOpen) {
+        menu.x = lerp(menu.x, 0, 0.1)
+    } else {
+        menu.x = lerp(menu.x, -menu.w, 0.1)
+    }
+
+    menu.show()
 }
 
 function updateProjectiles(projectiles, troops) {
@@ -280,5 +300,11 @@ function keyTyped() {
         blueToRemove = []
         redToRemove = []
         battling = false;
+    }
+}
+
+function mousePressed() {
+    if (menuOpen) {
+        menu.onClick()
     }
 }

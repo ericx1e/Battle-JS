@@ -4,11 +4,11 @@ function drawSettings(color) {
     colorMode(RGB)
     switch (color) {
         case 'red':
-            fill(255, 50, 50, 150)
+            fill(255, 120, 120, 150)
             stroke(255, 150, 150)
             break;
         case 'blue':
-            fill(50, 50, 255, 150)
+            fill(120, 120, 255, 150)
             stroke(150, 150, 255)
             break;
     }
