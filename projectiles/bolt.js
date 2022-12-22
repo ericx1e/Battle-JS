@@ -27,7 +27,7 @@ function Bolt(start, target, team) {
 
         for (let i = 0; i < targets.length; i++) {
             other = targets[i];
-            if (other == this) {
+            if (other == this || other.isDead) {
                 continue
             }
 
