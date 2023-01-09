@@ -35,7 +35,9 @@ function Bolt(start, target, team) {
 
             if (distSquared(this.pos.x, this.pos.y, other.pos.x, other.pos.y) < r * r) {
                 other.takeDamage(this.damage)
-                this.forces.push(new Arc(other, team))
+                for (let i = 0; i < 5; i++) {
+                    this.forces.push(new Arc(other, team))
+                }
                 return true
             }
 

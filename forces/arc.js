@@ -4,8 +4,8 @@ function Arc(target, team) {
     this.target = target
     this.nextTarget;
     this.charges = 10
-    this.damage = 35
-    this.range = width / 50
+    this.damage = 10
+    this.range = width / 75
 
     this.isDone
 
@@ -20,9 +20,20 @@ function Arc(target, team) {
         this.nextTarget = undefined
         foes.forEach(foe => {
             if (!foe.isDead && !this.hit.includes(foe) && foe != this.target) {
+                if (!this.nextTarget) {
+                    this.nextTarget = foe
+                } else {
+                    if (distSquared(this.target.pos.x, this.target.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.target.pos.x, this.target.pos.y, this.nextTarget.pos.x, this.nextTarget.pos.y)) {
+                        if (random(0, 1) > 0.5) {
+                            this.nextTarget = foe
+                        }
+                    }
+                }
+                /*
                 if (!this.nextTarget || distSquared(this.target.pos.x, this.target.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.target.pos.x, this.target.pos.y, this.nextTarget.pos.x, this.nextTarget.pos.y)) {
                     this.nextTarget = foe
                 }
+                */
             }
         })
 

@@ -1,15 +1,25 @@
-function drawSettings(color) {
+function drawSettings(color, tranparency) {
     // drawingContext.setLineDash([])
     strokeWeight(width / 1000)
     colorMode(RGB)
     switch (color) {
         case 'red':
-            fill(255, 120, 120, 150)
-            stroke(255, 150, 150)
+            if (tranparency) {
+                fill(255, 120, 120, tranparency)
+                stroke(255, 150, 150, tranparency)
+            } else {
+                fill(255, 120, 120, 150)
+                stroke(255, 150, 150)
+            }
             break;
         case 'blue':
-            fill(120, 120, 255, 150)
-            stroke(150, 150, 255)
+            if (tranparency) {
+                fill(120, 120, 255, tranparency)
+                stroke(150, 150, 255, tranparency)
+            } else {
+                fill(120, 120, 255, 150)
+                stroke(150, 150, 255)
+            }
             break;
     }
 }

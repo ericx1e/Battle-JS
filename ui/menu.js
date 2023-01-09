@@ -7,7 +7,7 @@ function Menu() {
     let buttonsPerRow = 3
 
     let buttonSize = this.h / 15
-    let troopButtonIds = ['soldier', 'archer', 'soldier', 'soldier']
+    let troopButtonIds = ['soldier', 'archer', 'necromancer', 'summoner', 'ewizard', 'shield']
     let utilButtonIds = ['rand_all', 'rand_blue', 'rand_red', 'erase', 'clear', 'mode']
     this.buttons = []
 
@@ -51,8 +51,10 @@ function Menu() {
     }
 
     this.onClick = function () {
-        this.buttons.forEach(button => {
-            button.onClick();
-        })
+        if (menuOpen) {
+            this.buttons.forEach(button => {
+                button.onClick();
+            })
+        }
     }
 }

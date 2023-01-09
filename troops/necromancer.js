@@ -22,7 +22,7 @@ function Necromancer(x, y, team) {
 
     this.isDead = false
 
-    this.show = function () {
+    this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
 
@@ -35,17 +35,17 @@ function Necromancer(x, y, team) {
             line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
         }
 
-        drawSettings(team)
+        drawSettings(team, tranparency)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         // rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        drawSettings(team)
+        drawSettings(team, tranparency)
         noStroke()
         rectMode(CENTER)
         // rect(0, 0, this.size, this.size);
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
 
-        drawSettings(team)
+        drawSettings(team, tranparency)
         noFill();
         beginShape();
         vertex(this.size / 2, -this.size / 2);
@@ -119,6 +119,7 @@ function Necromancer(x, y, team) {
             subject.vel = p5.Vector.sub(this.pos, subject.pos)
             let dist = distSquared(this.pos.x, this.pos.y, subject.pos.x, subject.pos.y)
             subject.vel.setMag(width * 40 / dist)
+            subject.vel.limit(width / 20)
             subject.pos.add(subject.vel)
 
 
