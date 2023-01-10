@@ -33,3 +33,32 @@ function distSquared(x, y, x1, y1) { //faster than sqrt
 function lerp1(start, end, amt) {
     return (1 - amt) * start + amt * end;
 }
+
+function clearTroops(team) {
+    battling = false;
+    if (team) {
+        if (team == 'red') {
+            redTroops = []
+            redProjectiles = []
+            redToRemove = []
+        } else if (team == 'blue') {
+            blueTroops = []
+            blueProjectiles = []
+            blueToRemove = []
+        }
+    } else {
+        clearTroops('red')
+        clearTroops('blue')
+    }
+}
+
+function randomTroops(team) {
+    let buffer = width / 30
+    let offset = width / 2
+    let mult = team == 'red' ? -1 : 1
+    troops = team == 'red' ? redTroops : blueTroops
+
+    for (let i = 0; i < 100; i++) {
+        troops.push(new Soldier(offset + mult * random(buffer, width / 2 - buffer), random(buffer, height - buffer), team))
+    }
+}

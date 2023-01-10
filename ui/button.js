@@ -85,7 +85,31 @@ function Button(x, y, s, id) {
                     fill(0)
                     textAlign(CENTER, CENTER)
                     textSize(this.s / 4)
-                    text('all' + '\n' + 'random', this.x, this.y)
+                    text('random', this.x, this.y)
+                    break
+                case 'rand_red':
+                    if (this.isTouchingMouse()) {
+                        fill(185, 140, 140)
+                    } else {
+                        fill(210, 160, 160)
+                    }
+                    rect(this.x, this.y, this.s, this.s, this.s / 5, this.s / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.s / 4)
+                    text('random', this.x, this.y)
+                    break
+                case 'rand_blue':
+                    if (this.isTouchingMouse()) {
+                        fill(140, 140, 185)
+                    } else {
+                        fill(160, 160, 210)
+                    }
+                    rect(this.x, this.y, this.s, this.s, this.s / 5, this.s / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.s / 4)
+                    text('random', this.x, this.y)
                     break
                 case 'erase':
                     if (this.isTouchingMouse()) {
@@ -129,6 +153,7 @@ function Button(x, y, s, id) {
 
     this.onClick = function () {
         if (this.isTouchingMouse()) {
+            erasing = false
             if (this.model) {
                 newTroopId = id;
             } else {
@@ -136,6 +161,23 @@ function Button(x, y, s, id) {
                 switch (id) {
                     case 'start':
                         battling = !battling;
+                        break
+                    case 'rand_all':
+                        randomTroops('red')
+                        randomTroops('blue')
+                        break
+                    case 'rand_red':
+                        randomTroops('red')
+                        break
+                    case 'rand_blue':
+                        randomTroops('blue')
+                        break
+                    case 'clear':
+                        clearTroops()
+                        break
+                    case 'erase':
+                        erasing = true
+                        newTroopId = undefined
                         break
                 }
             }

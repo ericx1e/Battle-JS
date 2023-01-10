@@ -5,7 +5,7 @@ function Archer(x, y, team) {
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
-    this.speed = this.size / 10;
+    this.speed = this.size / 15;
     this.maxSpeed = this.speed;
     this.target = this
     this.maxHitpoints = 50
@@ -13,7 +13,7 @@ function Archer(x, y, team) {
     this.targetHitpoints = this.hitpoints
     this.attackPower = 0
     this.attackSpeed = 100 //number of frames between attacks
-    this.attackRange = this.size * 30
+    this.attackRange = this.size * 40
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
     this.takingDamageFrames = 0 //animation for getting hit

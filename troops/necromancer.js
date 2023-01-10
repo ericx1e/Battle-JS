@@ -6,7 +6,7 @@ function Necromancer(x, y, team) {
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
-    this.speed = this.size / 20;
+    this.speed = this.size / 25;
     this.maxSpeed = this.speed;
     this.target = this
     this.maxHitpoints = 100
