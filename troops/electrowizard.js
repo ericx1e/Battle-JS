@@ -42,13 +42,20 @@ function EWizard(x, y, team) {
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         drawSettings(team, tranparency)
         noFill();
-        beginShape();
-        vertex(this.size / 2, -this.size / 1.2);
-        vertex(this.size / 2, this.size / 1.2);
-        // vertex(this.size / 1.4, this.size / 3.5);
-        // vertex(this.size / 1.4, -this.size / 3.5);
-        vertex(this.size / 2, -this.size / 1.2);
-        endShape();
+
+        let drawVec = p5.Vector.sub(createVector(this.size, this.size / 1.7), createVector(this.size, 0))
+        let randMag = drawVec.mag() / 10
+        push()
+        translate(this.size / 1.9, -this.size / 4)
+        rotate(PI / 10)
+        beginShape()
+        vertex(-drawVec.x, - drawVec.y)
+        vertex(-drawVec.x / 2 + random(-randMag, randMag), - drawVec.y / 2 + random(-randMag, randMag))
+        vertex(random(-randMag, randMag), random(-randMag, randMag))
+        vertex(drawVec.x / 2 + random(-randMag, randMag), drawVec.y / 2 + random(-randMag, randMag))
+        vertex(drawVec.x, drawVec.y)
+        endShape()
+        pop()
         // quad(this.size / 2, -this.size / 1.2, this.size / 2, this.size / 1.2, this.size / 1.5, this.size / 3, this.size / 1.5, -this.size / 3);
 
         // sphere(this.size / 2)
@@ -72,10 +79,14 @@ function EWizard(x, y, team) {
         }
 
         this.target = foes[0]
+
+        let targetDist = distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)
         foes.forEach(foe => {
             if (!foe.isDead) {
-                if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
+                let dist = distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y)
+                if (dist < targetDist) {
                     this.target = foe
+                    targetDist = dist
                 }
             }
         })

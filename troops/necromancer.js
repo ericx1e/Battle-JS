@@ -46,7 +46,12 @@ function Necromancer(x, y, team) {
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
 
         drawSettings(team, tranparency)
+
         noFill();
+        line(this.size / 2, this.size / 3, this.size / 2, -this.size / 2)
+        let s = this.size / 3
+        arc(this.size / 2, -this.size / 2 - s / 2, s * 1.5, s, -PI / 2, PI / 2)
+        /*
         beginShape();
         vertex(this.size / 2, -this.size / 2);
         vertex(this.size / 2, -this.size / 1.3);
@@ -57,6 +62,7 @@ function Necromancer(x, y, team) {
         vertex(-this.size / 2, -this.size / 2);
         vertex(this.size / 2, -this.size / 2);
         endShape();
+        */
 
 
         // sphere(this.size / 2)
@@ -79,10 +85,14 @@ function Necromancer(x, y, team) {
         }
 
         this.target = foes[0]
+
+        let targetDist = distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)
         foes.forEach(foe => {
             if (!foe.isDead) {
-                if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
+                let dist = distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y)
+                if (dist < targetDist) {
                     this.target = foe
+                    targetDist = dist
                 }
             }
         })

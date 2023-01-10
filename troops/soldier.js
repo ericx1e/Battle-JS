@@ -59,10 +59,14 @@ function Soldier(x, y, team) {
         }
 
         this.target = foes[0]
+
+        let targetDist = distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)
         foes.forEach(foe => {
             if (!foe.isDead) {
-                if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
+                let dist = distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y)
+                if (dist < targetDist) {
                     this.target = foe
+                    targetDist = dist
                 }
             }
         })
