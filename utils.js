@@ -10,6 +10,8 @@ function drawSettings(color, tranparency) {
             } else {
                 fill(255, 120, 120, 150)
                 stroke(255, 150, 150)
+                // fill(0, 150)
+                // stroke(0)
             }
             break;
         case 'blue':
@@ -19,15 +21,26 @@ function drawSettings(color, tranparency) {
             } else {
                 fill(120, 120, 255, 150)
                 stroke(150, 150, 255)
+                // fill(255, 150)
+                // stroke(255)
             }
             break;
     }
 }
 
-function distSquared(x, y, x1, y1) { //faster than sqrt
+function distSquaredVal(x, y, x1, y1) { //faster than sqrt
     let dx = x1 - x;
     let dy = y1 - y;
     return dx * dx + dy * dy;
+}
+
+// vectors
+function distSquared(a, b) {
+    return p5.Vector.sub(a, b).magSq()
+}
+
+function sqr(n) {
+    return n * n
 }
 
 function lerp1(start, end, amt) {

@@ -14,7 +14,7 @@ function Necromancer(x, y, team) {
     this.targetHitpoints = this.hitpoints
     this.attackPower = 0
     this.attackSpeed = 1 //number of frames between attacks
-    this.attackRange = this.size * 15
+    this.attackRange = this.size * 25
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
     // this.drawSpeed = this.size * 2
 
@@ -86,10 +86,10 @@ function Necromancer(x, y, team) {
 
         this.target = foes[0]
 
-        let targetDist = distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)
+        let targetDist = distSquared(this.pos, this.target.pos)
         foes.forEach(foe => {
             if (!foe.isDead) {
-                let dist = distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y)
+                let dist = distSquared(this.pos, foe.pos)
                 if (dist < targetDist) {
                     this.target = foe
                     targetDist = dist
@@ -99,7 +99,7 @@ function Necromancer(x, y, team) {
 
         let removed = 0
 
-        this.move(foes.concat(allies))
+        moveUnit(this, allies.concat(foes))
         if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
             removed = this.attack();
         }
@@ -127,7 +127,7 @@ function Necromancer(x, y, team) {
                 continue
             }
             subject.vel = p5.Vector.sub(this.pos, subject.pos)
-            let dist = distSquared(this.pos.x, this.pos.y, subject.pos.x, subject.pos.y)
+            let dist = distSquared(this.pos, subject.pos)
             subject.vel.setMag(width * 40 / dist)
             subject.vel.limit(width / 20)
             subject.pos.add(subject.vel)
@@ -143,58 +143,5 @@ function Necromancer(x, y, team) {
             }
         }
         return removed
-    }
-
-    this.takeDamage = function (damage) {
-        this.hitpoints -= damage
-        // this.targetHitpoints -= damage
-        // this.takingDamageFrames = 20;
-    }
-
-    this.move = function (others) {
-        if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) > (this.attackRange * this.attackRange) * (0.9 * 0.9)) {
-            this.vel = p5.Vector.sub(this.target.pos, this.pos).limit(this.speed)
-            // stroke(255)
-            // line(this.pos.x, this.pos.y, this.pos.x + this.vel.x * 15, this.pos.y + this.vel.y * 15);
-            this.pos.add(this.vel)
-        }
-        this.checkCollision(others)
-        this.checkBoundaries()
-        // if (this.isColliding(others)) {
-        //     this.pos.sub(this.vel.mult(random(0.5, 3)))
-        // }
-    }
-
-    this.checkCollision = function (others) {
-        let squeezeVel = createVector(0, 0)
-        for (let i = 0; i < others.length; i++) {
-            other = others[i];
-            if (other.isDead) continue
-            if (other == this) {
-                continue
-            }
-            let minDist = this.size / 2 + other.size / 2
-            if (distSquared(this.pos.x, this.pos.y, other.pos.x, other.pos.y) < minDist * minDist) {
-                let moveVector = p5.Vector.sub(this.pos, other.pos).limit(this.speed * random(0.4, 0.5))
-                squeezeVel.add(moveVector)
-                other.pos.sub(moveVector)
-            }
-        }
-        this.pos.add(squeezeVel)
-    }
-
-    this.checkBoundaries = function () {
-        if (this.pos.x > width) {
-            this.pos.add(createVector(-this.size / 2, 0))
-        }
-        if (this.pos.x < 0) {
-            this.pos.add(createVector(this.size / 2, 0))
-        }
-        if (this.pos.y > height) {
-            this.pos.add(createVector(0, -this.size / 2))
-        }
-        if (this.pos.y < 0) {
-            this.pos.add(createVector(0, this.size / 2))
-        }
     }
 }

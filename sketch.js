@@ -119,6 +119,7 @@ function draw() {
                     bi -= removed
                 }
             }
+            bi++;
         }
         if (redTroop) {
             if (redTroop.name == 'necromancer') {
@@ -138,16 +139,13 @@ function draw() {
                     ri -= removed
                 }
             }
+            ri++;
         }
-
-
-        bi++;
-        ri++;
     }
 
     for (let i = 0; i < blueForces.length; i++) {
         let force = blueForces[i]
-        force.update(redTroops)
+        force.update(blueTroops, redTroops)
         if (force.isDone) {
             blueForces.splice(i, 1)
         }
@@ -155,7 +153,7 @@ function draw() {
 
     for (let i = 0; i < redForces.length; i++) {
         let force = redForces[i]
-        force.update(blueTroops)
+        force.update(redTroops, blueTroops)
         if (force.isDone) {
             redForces.splice(i, 1)
         }
@@ -240,6 +238,9 @@ function draw() {
                 case 'shield':
                     newTroopGhost = new Shield(mouseX, mouseY, team)
                     break
+                case 'healer':
+                    newTroopGhost = new Healer(mouseX, mouseY, team)
+                    break
                 default:
                     newTroopGhost = undefined
                     break
@@ -302,7 +303,7 @@ function mouseDragged() {
         for (let i = 0; i < redTroops.length; i++) {
             troop = redTroops[i]
             let r = eraseSize / 2 + troop.size / 2
-            if (distSquared(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
+            if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
                 redTroops.splice(i, 1)
                 i--
             }
@@ -310,7 +311,7 @@ function mouseDragged() {
         for (let i = 0; i < blueTroops.length; i++) {
             troop = blueTroops[i]
             let r = eraseSize / 2 + troop.size / 2
-            if (distSquared(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
+            if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
                 blueTroops.splice(i, 1)
                 i--
             }
@@ -346,6 +347,9 @@ function mouseReleased() {
                 break
             case 'shield':
                 newTroop = new Shield(mouseX, mouseY, team)
+                break
+            case 'healer':
+                newTroop = new Healer(mouseX, mouseY, team)
                 break
         }
 

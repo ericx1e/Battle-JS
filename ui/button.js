@@ -27,6 +27,9 @@ function Button(x, y, s, id) {
         case 'shield':
             this.model = new Shield(modelX, modelY, modelTeam)
             break
+        case 'healer':
+            this.model = new Healer(modelX, modelY, modelTeam)
+            break
     }
 
     this.show = function () {
@@ -233,6 +236,10 @@ function extraInfo(id) {
         case 'shield':
             title = 'Shield'
             description = 'Extremely tough units capable of pushing foes away to maintain a strong front line'
+            break
+        case 'healer':
+            title = 'Healer'
+            description = 'Heals allies around them '
             break
     }
 

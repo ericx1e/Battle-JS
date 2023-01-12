@@ -7,7 +7,7 @@ function Menu() {
     let buttonsPerRow = 3
 
     let buttonSize = this.h / 15
-    let troopButtonIds = ['soldier', 'archer', 'necromancer', 'summoner', 'ewizard', 'shield']
+    let troopButtonIds = ['soldier', 'archer', 'necromancer', 'summoner', 'ewizard', 'shield', 'healer']
     let utilButtonIds = ['rand_all', 'rand_blue', 'rand_red', 'erase', 'clear', 'mode']
     this.buttons = []
 
