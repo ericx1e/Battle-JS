@@ -43,6 +43,10 @@ function sqr(n) {
     return n * n
 }
 
+function cb(n) {
+    return n * n * n
+}
+
 function lerp1(start, end, amt) {
     return (1 - amt) * start + amt * end;
 }

@@ -4,11 +4,11 @@ function Healer(x, y, team) {
 
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
-    this.size = width / 100
-    this.speed = this.size / 8;
+    this.size = width / 130
+    this.speed = this.size / 9;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 60
+    this.maxHitpoints = 90
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 0
@@ -83,15 +83,22 @@ function Healer(x, y, team) {
 
         this.target = allies[0]
 
+        // let sumVector = createVector(0, 0)
+        let sumVector = createVector(this.pos.x, this.pos.y)
         allies.forEach(ally => {
-            if (!ally.isDead) {
-                if (ally.hitpoints / ally.maxHitpoints < this.target.hitpoints / this.target.maxHitpoints) {
-                    this.target = ally
-                }
+            if (ally != this && ally.name != 'zombie' && !ally.isDead) {
+                sumVector.add(p5.Vector.mult(p5.Vector.sub(ally.pos, this.pos).limit(this.speed), (1 - cb(ally.hitpoints / ally.maxHitpoints)) * sqr(width) * (1 / distSquared(this.pos, ally.pos) + 1)))
+                // sumVector.add(p5.Vector.mult(ally.pos, 1))
+                // if (ally.hitpoints / ally.maxHitpoints < this.target.hitpoints / this.target.maxHitpoints) {
+                //     this.target = ally
+                // }
             }
         })
 
-        moveUnit(this, allies.concat(foes))
+        // sumVector.div(totalHp)
+        // sumVector.add(this.pos)
+
+        moveUnitTowards(this, sumVector, allies.concat(foes))
 
         if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
             this.attack();

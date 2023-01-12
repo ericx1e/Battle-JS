@@ -30,6 +30,9 @@ function Button(x, y, s, id) {
         case 'healer':
             this.model = new Healer(modelX, modelY, modelTeam)
             break
+        case 'reaper':
+            this.model = new Reaper(modelX, modelY, modelTeam)
+            break
     }
 
     this.show = function () {
@@ -239,7 +242,11 @@ function extraInfo(id) {
             break
         case 'healer':
             title = 'Healer'
-            description = 'Heals allies around them '
+            description = 'Heals allies in an area around them'
+            break
+        case 'reaper':
+            title = 'Reaper'
+            description = 'Tough and fast demons that deal damage in an area around them and heal with each takedown'
             break
     }
 

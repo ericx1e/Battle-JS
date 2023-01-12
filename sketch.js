@@ -241,6 +241,9 @@ function draw() {
                 case 'healer':
                     newTroopGhost = new Healer(mouseX, mouseY, team)
                     break
+                case 'reaper':
+                    newTroopGhost = new Reaper(mouseX, mouseY, team)
+                    break
                 default:
                     newTroopGhost = undefined
                     break
@@ -350,6 +353,9 @@ function mouseReleased() {
                 break
             case 'healer':
                 newTroop = new Healer(mouseX, mouseY, team)
+                break
+            case 'reaper':
+                newTroop = new Reaper(mouseX, mouseY, team)
                 break
         }
 

@@ -10,6 +10,15 @@ function moveUnit(unit, others) {
     // }
 }
 
+function moveUnitTowards(unit, dest, others) {
+    if (distSquared(unit.pos, dest) > sqr(unit.attackRange * 0.9)) {
+        unit.vel = p5.Vector.sub(dest, unit.pos).limit(unit.speed)
+        unit.pos.add(unit.vel)
+    }
+    checkCollision(unit, others)
+    checkBoundaries(unit)
+}
+
 function checkCollision(unit, others) {
     let squeezeVel = createVector(0, 0)
     for (let i = 0; i < others.length; i++) {

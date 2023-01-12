@@ -1,19 +1,24 @@
-function Zombie(x, y, team) {
-    this.name = 'zombie'
+function Reaper(x, y, team) {
+    this.name = 'reaper'
+    this.forces = team == 'red' ? redForces : blueForces
+
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
-    this.size = width / 150
-    this.speed = this.size / 15;
+    this.size = width / 80
+    this.speed = this.size / 20;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 40
-    this.hitpoints = 0.25
+    this.maxHitpoints = 200
+    this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 7
+    this.attackPower = 30
     this.attackSpeed = 40 //number of frames between attacks
-    this.attackRange = this.size * 1.5
+    this.attackRange = this.size * 2
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-    this.spawnFrame = frameCount
+
+    this.attackRotate = 0
+
+    this.armor = 2 // reduces all damage taken
 
     this.takingDamageFrames = 0 //animation for getting hit
 
@@ -35,11 +40,28 @@ function Zombie(x, y, team) {
         drawSettings(team, tranparency)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
-        rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        rotate(this.attackRotate)
+        if (this.attackRotate < 0) {
+            this.attackRotate *= 0.90
+            this.attackRotate += PI / 50
+        }
         drawSettings(team, tranparency)
+
+        let s = this.size / 4
+        push()
+        translate(this.size / 2, 0)
+        rotate(PI / 16)
+        line(0, s, 0, -5 * s)
+        let r = s * 10
+        noFill()
+        arc(0, +r / 2 - 5 * s, r, r, -PI / 2, -PI / 2 + PI / 4)
+        arc(0, +r / 2 - 4 * s, r * 2, r, -PI / 2, -PI / 2 + PI / 5.2)
+        pop()
+
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        // sphere(this.size / 2)
+        drawSettings(team, tranparency)
+        // noFill();
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
         }
@@ -54,15 +76,6 @@ function Zombie(x, y, team) {
             this.target = this
             return
         }
-        if (frameCount - this.spawnFrame < this.maxHitpoints * 4 - 1) {
-            if (this.hitpoints <= 0) {
-                this.isDead = true
-            }
-            this.hitpoints += 0.25
-            return
-        }
-
-        // this.hitpoints *= 0.999
 
         if (this.speed < this.maxSpeed) {
             this.speed += this.maxSpeed / 100
@@ -98,6 +111,7 @@ function Zombie(x, y, team) {
 
 
     this.attack = function () {
-        takeDamage(this.target, this.attackPower)
+        this.attackRotate = -4 * PI
+        this.forces.push(new ReaperSweep(this, this.attackRange, this.attackPower, team))
     }
 }
