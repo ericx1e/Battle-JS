@@ -1,3 +1,5 @@
+p5.disableFriendlyErrors = true;
+
 let redTroops = []
 let redToRemove = []
 let redProjectiles = []
@@ -6,6 +8,12 @@ let blueTroops = []
 let blueToRemove = []
 let blueProjectiles = []
 let blueForces = []
+
+let newTroop
+let newTroopId
+let newTroopGhost
+let erasing = false
+let eraseSize
 
 let panX = 0
 let panY = 0
@@ -16,6 +24,7 @@ let healthBars = false
 
 let troopId = 0
 
+let menuOpen = false;
 let buttons = []
 
 let font
@@ -24,31 +33,41 @@ function preload() {
     font = loadFont("Ubuntu/Ubuntu-Regular.ttf")
 }
 
+let canvasWidth
+let canvasHeight
+
 function setup() {
-    canvas = createCanvas(window.innerWidth, window.innerHeight, WEBGL)
-    canvas.position(0, 0)
+    canvasWidth = window.innerWidth * 3 / 4
+    canvasHeight = window.innerHeight * 3 / 4
+    canvas = createCanvas(canvasWidth, canvasHeight)
+    canvas.position((window.innerWidth - canvasWidth) / 2, (window.innerHeight - canvasHeight) / 2)
     zoom = (height / 2) / tan(PI / 6)
+
+    eraseSize = width / 40
 
     // for (let i = 0; i < 500; i++) {
     //     i % 2 == 0 ? redTroops.push(new Soldier(random(0, width), random(0, height), 'red')) : blueTroops.push(new Soldier(random(0, width), random(0, height), 'blue'))
     //     i % 2 == 0 ? redTroops.push(new Archer(random(0, width), random(0, height), 'red')) : blueTroops.push(new Archer(random(0, width), random(0, height), 'blue'))
     // }
 
-    for (let i = 20; i < width / 2; i += 60) {
-        for (let j = 20; j < height; j += 60) {
-            if (i <= 20) {
-                blueTroops.push(new Archer(width - i, j, 'blue'))
-                redTroops.push(new Archer(i, j, 'red'))
+    /*
+    for (let x = 20; x < width / 2; x += width / 25) {
+        for (let y = 20; y < height; y += height / 15) {
+            if (x <= 20) {
+                blueTroops.push(new Archer(width - x, y, 'blue'))
+                redTroops.push(new Archer(x, y, 'red'))
             } else {
-                blueTroops.push(new Soldier(width - i, j, 'blue'))
-                redTroops.push(new Soldier(i, j, 'red'))
+                blueTroops.push(new Soldier(width - x, y, 'blue'))
+                redTroops.push(new Soldier(x, y, 'red'))
             }
         }
-    }
 
+    }
     redTroops.push(new Necromancer(0, height / 2, 'red'), new Summoner(1, height / 2, 'red'), new EWizard(3, height / 2, 'red'))
     blueTroops.push(new Necromancer(width, height / 2, 'blue'), new Summoner(width - 1, height / 2, 'blue'), new EWizard(width - 3, height / 2, 'blue'))
+    */
 
+    menu = new Menu()
 }
 
 function draw() {
@@ -57,8 +76,6 @@ function draw() {
         camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
     }
     textFont(font)
-    push()
-    translate(-width / 2, -height / 2)
     fill(100)
     noStroke()
     textSize(20)
@@ -102,6 +119,7 @@ function draw() {
                     bi -= removed
                 }
             }
+            bi++;
         }
         if (redTroop) {
             if (redTroop.name == 'necromancer') {
@@ -121,16 +139,13 @@ function draw() {
                     ri -= removed
                 }
             }
+            ri++;
         }
-
-
-        bi++;
-        ri++;
     }
 
     for (let i = 0; i < blueForces.length; i++) {
         let force = blueForces[i]
-        force.update(redTroops)
+        force.update(blueTroops, redTroops)
         if (force.isDone) {
             blueForces.splice(i, 1)
         }
@@ -138,7 +153,7 @@ function draw() {
 
     for (let i = 0; i < redForces.length; i++) {
         let force = redForces[i]
-        force.update(blueTroops)
+        force.update(redTroops, blueTroops)
         if (force.isDone) {
             redForces.splice(i, 1)
         }
@@ -181,6 +196,7 @@ function draw() {
     updateProjectiles(redProjectiles, blueTroops)
 
 
+    noStroke()
     fill(255)
     text('fps: ' + Math.floor(frameRate()), 50, 50)
 
@@ -189,7 +205,73 @@ function draw() {
 
     fill(255)
     text(blueTroops.length, width * 3 / 4, height / 2)
-    pop()
+
+    if (!menuOpen) {
+        if (mouseX < menu.w / 8) {
+            menu.showBit()
+            if (mouseX < menu.w / 16 && mouseIsPressed) {
+                menuOpen = true
+            }
+        } else {
+            let team
+            if (mouseX < width / 2) {
+                team = 'red'
+            } else {
+                team = 'blue'
+            }
+            switch (newTroopId) {
+                case 'soldier':
+                    newTroopGhost = new Soldier(mouseX, mouseY, team)
+                    break;
+                case 'archer':
+                    newTroopGhost = new Archer(mouseX, mouseY, team)
+                    break
+                case 'necromancer':
+                    newTroopGhost = new Necromancer(mouseX, mouseY, team)
+                    break
+                case 'summoner':
+                    newTroopGhost = new Summoner(mouseX, mouseY, team)
+                    break
+                case 'ewizard':
+                    newTroopGhost = new EWizard(mouseX, mouseY, team)
+                    break
+                case 'shield':
+                    newTroopGhost = new Shield(mouseX, mouseY, team)
+                    break
+                case 'healer':
+                    newTroopGhost = new Healer(mouseX, mouseY, team)
+                    break
+                default:
+                    newTroopGhost = undefined
+                    break
+            }
+            if (newTroopGhost) {
+                newTroopGhost.show(50);
+            }
+            if (erasing) {
+                drawSettings('red')
+                stroke(255, 100)
+                fill(255, 50)
+                ellipse(mouseX, mouseY, eraseSize, eraseSize)
+            }
+        }
+    }
+
+    if (menuOpen && mouseX > menu.w * 1.5) {
+        menuOpen = false
+    }
+
+    if (menuOpen) {
+        menu.x = lerp(menu.x, 0, 0.1)
+    } else {
+        menu.x = lerp(menu.x, -menu.w, 0.1)
+    }
+
+    menu.show()
+
+    if (keyIsPressed && keyCode == SHIFT && mouseIsPressed && frameCount % 5 == 0) {
+        mouseReleased()
+    }
 }
 
 function updateProjectiles(projectiles, troops) {
@@ -217,10 +299,28 @@ function mouseDragged() {
             panning = true
         }
     }
+    if (!menuOpen && erasing) {
+        for (let i = 0; i < redTroops.length; i++) {
+            troop = redTroops[i]
+            let r = eraseSize / 2 + troop.size / 2
+            if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
+                redTroops.splice(i, 1)
+                i--
+            }
+        }
+        for (let i = 0; i < blueTroops.length; i++) {
+            troop = blueTroops[i]
+            let r = eraseSize / 2 + troop.size / 2
+            if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
+                blueTroops.splice(i, 1)
+                i--
+            }
+        }
+    }
 }
 
 function mouseReleased() {
-    if (!panning) {
+    if (!panning && !menuOpen) {
         let team
         if (mouseX < width / 2) {
             team = 'red'
@@ -228,28 +328,33 @@ function mouseReleased() {
             team = 'blue'
         }
 
-        let troop
-
-        switch (key) {
-            case '1':
-                troop = new Soldier(mouseX, mouseY, team)
+        newTroop = undefined
+        switch (newTroopId) {
+            case 'soldier':
+                newTroop = new Soldier(mouseX, mouseY, team)
                 break
-            case '2':
-                troop = new Archer(mouseX, mouseY, team)
+            case 'archer':
+                newTroop = new Archer(mouseX, mouseY, team)
                 break
-            case '3':
-                troop = new Necromancer(mouseX, mouseY, team)
+            case 'necromancer':
+                newTroop = new Necromancer(mouseX, mouseY, team)
                 break
-            case '4':
-                troop = new Summoner(mouseX, mouseY, team)
+            case 'summoner':
+                newTroop = new Summoner(mouseX, mouseY, team)
                 break
-            case '5':
-                troop = new EWizard(mouseX, mouseY, team)
+            case 'ewizard':
+                newTroop = new EWizard(mouseX, mouseY, team)
+                break
+            case 'shield':
+                newTroop = new Shield(mouseX, mouseY, team)
+                break
+            case 'healer':
+                newTroop = new Healer(mouseX, mouseY, team)
                 break
         }
 
-        if (troop) {
-            team == 'red' ? redTroops.push(troop) : blueTroops.push(troop)
+        if (newTroop) {
+            team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
         }
     }
     panning = false
@@ -268,17 +373,27 @@ window.addEventListener("wheel", function (e) {
     }
 });
 
+let keyIsPressed = false
+
+function keyPressed() {
+    keyIsPressed = true
+}
+
+function keyReleased() {
+    keyIsPressed = false
+}
+
 function keyTyped() {
     if (key == ' ') {
         battling = !battling;
     }
     if (key == 'c') {
-        redTroops = []
-        blueTroops = []
-        redProjectiles = []
-        blueProjectiles = []
-        blueToRemove = []
-        redToRemove = []
-        battling = false;
+        clearTroops()
+    }
+}
+
+function mousePressed() {
+    if (menuOpen) {
+        menu.onClick()
     }
 }

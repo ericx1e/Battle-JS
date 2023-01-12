@@ -7,7 +7,7 @@ function Bolt(start, target, team) {
     this.vel.rotate(random(-0.05, 0.05))
     let drawVec = createVector(this.vel.x, this.vel.y).setMag(this.size)
     this.pos.add(p5.Vector.mult(drawVec, 2))
-    this.damage = 100
+    this.damage = 0
 
     this.show = function () {
         let randMag = this.size / 4
@@ -27,15 +27,15 @@ function Bolt(start, target, team) {
 
         for (let i = 0; i < targets.length; i++) {
             other = targets[i];
-            if (other == this) {
+            if (other == this || other.isDead) {
                 continue
             }
 
-            let r = this.size / 2 + other.size;
-
-            if (distSquared(this.pos.x, this.pos.y, other.pos.x, other.pos.y) < r * r) {
-                other.takeDamage(this.damage)
-                this.forces.push(new Arc(other, team))
+            if (distSquared(this.pos, other.pos) < sqr(this.size / 2 + other.size)) {
+                takeDamage(other, this.damage)
+                for (let i = 0; i < 5; i++) {
+                    this.forces.push(new Arc(other, team))
+                }
                 return true
             }
 

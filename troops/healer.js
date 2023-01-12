@@ -1,21 +1,20 @@
-function Summoner(x, y, team) {
-    this.name = 'summoner'
-    this.allies = team == 'red' ? redTroops : blueTroops
+function Healer(x, y, team) {
+    this.name = 'healer'
+    this.forces = team == 'red' ? redForces : blueForces
 
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
-    this.speed = this.size / 25;
+    this.speed = this.size / 8;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 100
+    this.maxHitpoints = 60
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 0
-    this.attackSpeed = 90 //number of frames between attacks
-    this.attackRange = this.size * 30
+    this.attackSpeed = 100 //number of frames between attacks
+    this.attackRange = this.size * 5
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-    // this.drawSpeed = this.size * 2
 
     this.takingDamageFrames = 0 //animation for getting hit
 
@@ -40,24 +39,28 @@ function Summoner(x, y, team) {
         // rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
         drawSettings(team, tranparency)
         noStroke()
-        rectMode(CENTER)
-        // rect(0, 0, this.size, this.size);
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
+
 
         drawSettings(team, tranparency)
         noFill();
         beginShape();
-        vertex(this.size / 2, -this.size / 2);
-        vertex(this.size / 2, -this.size / 1.3);
-        vertex(this.size / 4, -this.size / 1.5);
-        vertex(0, -this.size / 1.1);
-        vertex(-this.size / 4, -this.size / 1.5);
-        vertex(-this.size / 2, -this.size / 1.3);
-        vertex(-this.size / 2, -this.size / 2);
-        vertex(this.size / 2, -this.size / 2);
+        let l = this.size / 6
+        let offsetH = -this.size / 2
+        vertex(-l / 2, offsetH);
+        vertex(l / 2, offsetH);
+        vertex(l / 2, offsetH - l);
+        vertex(l / 2 + l, offsetH - l);
+        vertex(l / 2 + l, offsetH - 2 * l);
+        vertex(l / 2, offsetH - 2 * l);
+        vertex(l / 2, offsetH - 3 * l);
+        vertex(-l / 2, offsetH - 3 * l);
+        vertex(-l / 2, offsetH - 2 * l);
+        vertex(-l / 2 - l, offsetH - 2 * l);
+        vertex(-l / 2 - l, offsetH - l);
+        vertex(-l / 2, offsetH - l);
+        vertex(-l / 2, offsetH);
         endShape();
-
-
         // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
@@ -68,7 +71,8 @@ function Summoner(x, y, team) {
 
     this.update = function (allies, foes) {
         if (this.isDead) return
-        if (foes.length == 0) {
+
+        if (allies.length == 0) {
             this.target = this
             return
         }
@@ -77,43 +81,31 @@ function Summoner(x, y, team) {
             this.speed += this.maxSpeed / 100
         }
 
-        this.target = foes[0]
+        this.target = allies[0]
 
-        let targetDist = distSquared(this.pos, this.target.pos)
-        foes.forEach(foe => {
-            if (!foe.isDead) {
-                let dist = distSquared(this.pos, foe.pos)
-                if (dist < targetDist) {
-                    this.target = foe
-                    targetDist = dist
+        allies.forEach(ally => {
+            if (!ally.isDead) {
+                if (ally.hitpoints / ally.maxHitpoints < this.target.hitpoints / this.target.maxHitpoints) {
+                    this.target = ally
                 }
             }
         })
 
-        let removed = 0
-
         moveUnit(this, allies.concat(foes))
+
         if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
-            removed = this.attack();
+            this.attack();
         }
+
         // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
 
         if (this.hitpoints <= 0) {
-            for (let i = 0; i < 5; i++) {
-                this.allies.push(new Zombie(this.pos.x + random(-this.size, this.size), this.pos.y + random(-this.size, this.size), team))
-            }
             this.isDead = true
-        }
-
-        if (removed > 0) {
-            return removed
         }
     }
 
 
     this.attack = function () {
-        for (let i = 0; i < 3; i++) {
-            this.allies.push(new Zombie(this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
-        }
+        this.forces.push(new HealPool(this.pos.x, this.pos.y, this.attackRange, team))
     }
 }

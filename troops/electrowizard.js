@@ -20,7 +20,7 @@ function EWizard(x, y, team) {
 
     this.isDead = false
 
-    this.show = function () {
+    this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
 
@@ -33,22 +33,29 @@ function EWizard(x, y, team) {
             line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
         }
 
-        drawSettings(team)
+        drawSettings(team, tranparency)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        drawSettings(team)
+        drawSettings(team, tranparency)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        drawSettings(team)
+        drawSettings(team, tranparency)
         noFill();
-        beginShape();
-        vertex(this.size / 2, -this.size / 1.2);
-        vertex(this.size / 2, this.size / 1.2);
-        // vertex(this.size / 1.4, this.size / 3.5);
-        // vertex(this.size / 1.4, -this.size / 3.5);
-        vertex(this.size / 2, -this.size / 1.2);
-        endShape();
+
+        let drawVec = p5.Vector.sub(createVector(this.size, this.size / 1.7), createVector(this.size, 0))
+        let randMag = drawVec.mag() / 10
+        push()
+        translate(this.size / 1.9, -this.size / 4)
+        rotate(PI / 10)
+        beginShape()
+        vertex(-drawVec.x, - drawVec.y)
+        vertex(-drawVec.x / 2 + random(-randMag, randMag), - drawVec.y / 2 + random(-randMag, randMag))
+        vertex(random(-randMag, randMag), random(-randMag, randMag))
+        vertex(drawVec.x / 2 + random(-randMag, randMag), drawVec.y / 2 + random(-randMag, randMag))
+        vertex(drawVec.x, drawVec.y)
+        endShape()
+        pop()
         // quad(this.size / 2, -this.size / 1.2, this.size / 2, this.size / 1.2, this.size / 1.5, this.size / 3, this.size / 1.5, -this.size / 3);
 
         // sphere(this.size / 2)
@@ -72,16 +79,20 @@ function EWizard(x, y, team) {
         }
 
         this.target = foes[0]
+
+        let targetDist = distSquared(this.pos, this.target.pos)
         foes.forEach(foe => {
             if (!foe.isDead) {
-                if (distSquared(this.pos.x, this.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y)) {
+                let dist = distSquared(this.pos, foe.pos)
+                if (dist < targetDist) {
                     this.target = foe
+                    targetDist = dist
                 }
             }
         })
 
-        this.move(allies.concat(foes))
-        if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) < this.attackRange * this.attackRange) {
+        moveUnit(this, allies.concat(foes))
+        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }
@@ -97,61 +108,6 @@ function EWizard(x, y, team) {
 
 
     this.attack = function () {
-        // this.target.takeDamage(this.attackPower)
         this.projectiles.push(new Bolt(this.pos, this.target.pos, team))
-    }
-
-    this.takeDamage = function (damage) {
-        this.hitpoints -= damage
-        this.hitpoints = Math.max(this.hitpoints, 0)
-        // this.targetHitpoints -= damage
-        // this.takingDamageFrames = 20;
-    }
-
-    this.move = function (others) {
-        if (distSquared(this.pos.x, this.pos.y, this.target.pos.x, this.target.pos.y) > (this.attackRange * this.attackRange) * (0.9 * 0.9)) {
-            this.vel = p5.Vector.sub(this.target.pos, this.pos).limit(this.speed)
-            // stroke(255)
-            // line(this.pos.x, this.pos.y, this.pos.x + this.vel.x * 15, this.pos.y + this.vel.y * 15);
-            this.pos.add(this.vel)
-        }
-        this.checkCollision(others)
-        this.checkBoundaries()
-        // if (this.isColliding(others)) {
-        //     this.pos.sub(this.vel.mult(random(0.5, 3)))
-        // }
-    }
-
-    this.checkCollision = function (others) {
-        let squeezeVel = createVector(0, 0)
-        for (let i = 0; i < others.length; i++) {
-            other = others[i];
-            if (other.isDead) continue
-            if (other == this) {
-                continue
-            }
-            let minDist = this.size / 2 + other.size / 2
-            if (distSquared(this.pos.x, this.pos.y, other.pos.x, other.pos.y) < minDist * minDist) {
-                let moveVector = p5.Vector.sub(this.pos, other.pos).limit(this.speed * 0.5)
-                squeezeVel.add(moveVector)
-                other.pos.sub(moveVector)
-            }
-        }
-        this.pos.add(squeezeVel)
-    }
-
-    this.checkBoundaries = function () {
-        if (this.pos.x > width) {
-            this.pos.add(createVector(-this.size / 2, 0))
-        }
-        if (this.pos.x < 0) {
-            this.pos.add(createVector(this.size / 2, 0))
-        }
-        if (this.pos.y > height) {
-            this.pos.add(createVector(0, -this.size / 2))
-        }
-        if (this.pos.y < 0) {
-            this.pos.add(createVector(0, this.size / 2))
-        }
     }
 }

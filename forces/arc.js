@@ -4,29 +4,44 @@ function Arc(target, team) {
     this.target = target
     this.nextTarget;
     this.charges = 10
-    this.damage = 35
-    this.range = width / 50
+    this.damage = 10
+    this.range = width / 40
 
     this.isDone
 
     this.hit = []
 
-    this.update = function (foes) {
+    this.update = function (allies, foes) {
         if (this.charges <= 0) this.isDone = true
         if (foes.length == 0) {
             this.isDone = true
         }
         if (this.isDone) return
-        this.nextTarget = undefined
-        foes.forEach(foe => {
+        this.nextTarget = foes[0]
+        let dist = distSquared(this.target.pos, this.nextTarget.pos)
+        for (let i = 1; i < foes.length; i++) {
+            let foe = foes[i]
             if (!foe.isDead && !this.hit.includes(foe) && foe != this.target) {
-                if (!this.nextTarget || distSquared(this.target.pos.x, this.target.pos.y, foe.pos.x, foe.pos.y) < distSquared(this.target.pos.x, this.target.pos.y, this.nextTarget.pos.x, this.nextTarget.pos.y)) {
-                    this.nextTarget = foe
+                let curDist = distSquared(this.target.pos, foe.pos)
+                if (curDist < dist) {
+                    if (random(0, 1) > 0.5) {
+                        this.nextTarget = foe
+                        dist = curDist
+                    }
                 }
             }
-        })
+        }
 
-        if (!this.nextTarget || distSquared(this.target.x, this.target.y, this.nextTarget.pos.x, this.nextTarget.pos.y) > this.range * this.range) {
+        this.target.speed = 0
+        takeDamage(this.target, this.damage)
+        this.hit.push(this.target)
+        if (this.target.name == 'zombie') {
+            this.charges -= 0.5
+        } else {
+            this.charges--
+        }
+
+        if (!this.nextTarget || distSquared(this.target.pos, this.nextTarget.pos) > sqr(this.range)) {
             this.isDone = true
             return
         }
@@ -47,14 +62,6 @@ function Arc(target, team) {
         vertex(this.target.pos.x + drawVec.x, this.target.pos.y + drawVec.y)
         endShape()
 
-        this.target.speed = 0
-        this.target.takeDamage(this.damage)
-        this.hit.push(this.target)
-        if (this.target.name == 'zombie') {
-            this.charges -= 0.5
-        } else {
-            this.charges--
-        }
         this.target = this.nextTarget
     }
 }

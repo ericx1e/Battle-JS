@@ -18,14 +18,12 @@ function Arrow(start, target, team) {
 
         for (let i = 0; i < targets.length; i++) {
             other = targets[i];
-            if (other == this) {
+            if (other == this || other.isDead) {
                 continue
             }
 
-            let r = this.size / 2 + other.size;
-
-            if (distSquared(this.pos.x, this.pos.y, other.pos.x, other.pos.y) < r * r) {
-                other.takeDamage(this.damage)
+            if (distSquared(this.pos, other.pos) < sqr(this.size / 2 + other.size)) {
+                takeDamage(other, this.damage)
                 return true
             }
 
