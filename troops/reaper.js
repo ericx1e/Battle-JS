@@ -11,8 +11,8 @@ function Reaper(x, y, team) {
     this.maxHitpoints = 200
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 30
-    this.attackSpeed = 40 //number of frames between attacks
+    this.attackPower = 25
+    this.attackSpeed = 45 //number of frames between attacks
     this.attackRange = this.size * 2
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 

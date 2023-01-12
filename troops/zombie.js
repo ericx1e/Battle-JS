@@ -6,10 +6,10 @@ function Zombie(x, y, team) {
     this.speed = this.size / 15;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 40
+    this.maxHitpoints = 30
     this.hitpoints = 0.25
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 7
+    this.attackPower = 10
     this.attackSpeed = 40 //number of frames between attacks
     this.attackRange = this.size * 1.5
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
