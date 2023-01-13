@@ -6,7 +6,7 @@ function Soldier(x, y, team) {
     this.speed = this.size / 10;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 100
+    this.maxHitpoints = 160
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 10
