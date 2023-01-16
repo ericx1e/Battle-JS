@@ -4,7 +4,7 @@ function HealPool(x, y, range, team) {
 
     this.totalFrames = 80
     this.frames = this.totalFrames
-    let totalHeal = 30
+    let totalHeal = 40
     this.heal = totalHeal / this.totalFrames
     this.range = range
 

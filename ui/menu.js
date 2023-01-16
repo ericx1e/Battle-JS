@@ -8,18 +8,28 @@ function Menu() {
 
     let buttonSize = this.h / 15
     let troopButtonIds = ['soldier', 'archer', 'necromancer', 'summoner', 'ewizard', 'shield', 'healer', 'reaper']
-    let utilButtonIds = ['rand_all', 'rand_blue', 'rand_red', 'erase', 'clear', 'mode']
+
+    let utilButtonIds
+    if (mode == 'sandbox') {
+        utilButtonIds = ['rand_all', 'rand_blue', 'rand_red', 'erase', 'clear']
+    } else if (mode == 'campaign') {
+        utilButtonIds = ['erase', 'restart']
+    }
     this.buttons = []
+
+    this.buttons.push(new Button(this.w / 2, buttonSize / 1.5, buttonSize * 2, buttonSize, 'return_to_title'))
 
     // Button locations are relative to menu location
     for (let i = 0; i < troopButtonIds.length; i++) {
-        this.buttons.push(new Button(this.w / 2 - buttonsPerRow * buttonSize / 2 + 1.5 * buttonSize * int(i % buttonsPerRow), this.h / 10 + int(i / buttonsPerRow) * buttonSize * 1.5, buttonSize, troopButtonIds[i]));
+        this.buttons.push(new Button(this.w / 2 - buttonsPerRow * buttonSize / 2 + 1.5 * buttonSize * int(i % buttonsPerRow), 2 * buttonSize + int(i / buttonsPerRow) * buttonSize * 1.5, buttonSize, buttonSize, troopButtonIds[i]));
     }
 
     for (let i = 0; i < utilButtonIds.length; i++) {
-        this.buttons.push(new Button(this.w / 2 - 3 * buttonSize / 2 + 1.5 * buttonSize * int(i % 3), this.h * 7 / 10 + int(i / 3) * buttonSize * 1.5, buttonSize, utilButtonIds[i]));
+        this.buttons.push(new Button(this.w / 2 - 3 * buttonSize / 2 + 1.5 * buttonSize * int(i % 3), this.h * 7 / 10 + int(i / 3) * buttonSize * 1.5, buttonSize, buttonSize, utilButtonIds[i]));
     }
-    this.buttons.push(new Button(this.w / 2, this.h * 9 / 10, buttonSize * 1.5, 'start'))
+
+    let startButtonSize = buttonSize * 1.5
+    this.buttons.push(new Button(this.w / 2, this.h * 9 / 10, startButtonSize, startButtonSize, 'start'))
 
     this.show = function () {
         push()
@@ -28,10 +38,12 @@ function Menu() {
         noStroke()
         rectMode(CORNER)
         rect(0, 0, this.w, this.h, 0, this.w / 25, this.w / 25, 0)
+        /*
         fill(0);
         textSize(this.w / 10);
         textAlign(CENTER, TOP)
         text("Menu", this.w / 2, -this.y + this.h / 100)
+        */
 
         this.buttons.forEach(button => {
             button.show();

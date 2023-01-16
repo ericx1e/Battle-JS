@@ -26,7 +26,9 @@ function ReaperSweep(unit, range, damage, team) {
                 if (distSquared(this.pos, foe.pos) < sqr(this.range)) {
                     takeDamage(foe, this.damage)
                     if (foe.hitpoints <= 0) {
-                        heal(unit, (unit.maxHitpoints - unit.hitpoints) * .05);
+                        if (foe.name != 'zombie') {
+                            heal(unit, (unit.maxHitpoints - unit.hitpoints) * .05)
+                        }
                     }
                     let moveVector = p5.Vector.sub(foe.pos, this.pos).setMag(foe.speed * 2)
                     foe.pos.add(moveVector)

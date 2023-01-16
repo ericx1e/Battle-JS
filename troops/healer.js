@@ -1,5 +1,6 @@
 function Healer(x, y, team) {
     this.name = 'healer'
+    this.cost = 50
     this.forces = team == 'red' ? redForces : blueForces
 
     this.pos = createVector(x, y)

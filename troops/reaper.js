@@ -1,5 +1,6 @@
 function Reaper(x, y, team) {
     this.name = 'reaper'
+    this.cost = 100
     this.forces = team == 'red' ? redForces : blueForces
 
     this.pos = createVector(x, y)
@@ -12,7 +13,7 @@ function Reaper(x, y, team) {
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 25
-    this.attackSpeed = 45 //number of frames between attacks
+    this.attackSpeed = 55 //number of frames between attacks
     this.attackRange = this.size * 2
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 

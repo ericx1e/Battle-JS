@@ -1,5 +1,6 @@
 function Archer(x, y, team) {
     this.name = 'archer'
+    this.cost = 20
     this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
     this.pos = createVector(x, y)
@@ -12,7 +13,7 @@ function Archer(x, y, team) {
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 0
-    this.attackSpeed = 100 //number of frames between attacks
+    this.attackSpeed = 80 //number of frames between attacks
     this.attackRange = this.size * 40
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 

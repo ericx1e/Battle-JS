@@ -1,5 +1,8 @@
 p5.disableFriendlyErrors = true;
 
+let screen = 'title'
+let mode
+
 let redTroops = []
 let redToRemove = []
 let redProjectiles = []
@@ -24,19 +27,26 @@ let healthBars = false
 
 let troopId = 0
 
+let menu
 let menuOpen = false;
-let buttons = []
+let titleButtons
+let levels = []
+let currentLevel
+let levelButtons
 
 let font
+// let fontItalic
 
 function preload() {
     font = loadFont("Ubuntu/Ubuntu-Regular.ttf")
+    // fontItalic = loadFont("Ubuntu/Ubuntu-Italic.ttf")
 }
 
 let canvasWidth
 let canvasHeight
 
 function setup() {
+    textFont(font)
     canvasWidth = window.innerWidth * 3 / 4
     canvasHeight = window.innerHeight * 3 / 4
     canvas = createCanvas(canvasWidth, canvasHeight)
@@ -67,10 +77,78 @@ function setup() {
     blueTroops.push(new Necromancer(width, height / 2, 'blue'), new Summoner(width - 1, height / 2, 'blue'), new EWizard(width - 3, height / 2, 'blue'))
     */
 
-    menu = new Menu()
+    let buttonSize = width / 10
+    titleButtons = [new Button(width / 2 - 1.25 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2 + 1.25 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox')]
+
+    let levelButtonSize = width / 13
+    let levelButtonsPerRow = 8
+    levelButtons = [new Button(levelButtonSize * 1.25, width / 40 + levelButtonSize / 4, levelButtonSize, levelButtonSize / 2, 'return_to_title')]
+    for (let level = 0; level < 10; level++) {
+        levels.push(new Level(level))
+        levelButtons.push(new Button(levelButtonSize * 1.25 + (level % levelButtonsPerRow) * levelButtonSize * 1.5, width / 20 + levelButtonSize + parseInt(level / levelButtonsPerRow) * levelButtonSize * 1.5, levelButtonSize, levelButtonSize, 'level' + level))
+    }
+    levels[0].locked = false
 }
 
 function draw() {
+    switch (screen) {
+        case 'title':
+            titleLoop()
+            break
+        case 'level_select':
+            levelSelectLoop()
+            break
+        case 'game':
+            gameLoop()
+            break
+    }
+}
+
+function titleLoop() {
+    background(39)
+
+    strokeWeight(width / 200)
+    fill(120, 120, 255, 150)
+    stroke(150, 150, 255)
+    ellipse(width / 10, height * 4 / 5, width / 10)
+    fill(255, 120, 120, 150)
+    stroke(255, 150, 150)
+    ellipse(width * 9.2 / 10, height * 3 / 5, width / 10)
+
+    let titleSize = width / 10
+    let offset = titleSize / 12
+    textSize(titleSize)
+    noStroke()
+    fill(255)
+    textAlign(CENTER, CENTER)
+    text('Battle Simulator', width / 2, height / 4)
+    fill(255, 100)
+    text('Battle Simulator', width / 2 + offset, height / 4)
+    textSize(titleSize / 2)
+    offset = titleSize / 24
+    fill(255)
+    textAlign(CENTER, CENTER)
+    text('created by Eric Xie', width / 2, height * 2.5 / 5)
+    fill(255, 100)
+    text('created by Eric Xie', width / 2 + offset, height * 2.5 / 5)
+
+    titleButtons.forEach(button => {
+        button.show()
+    })
+}
+
+function levelSelectLoop() {
+    background(39)
+    fill(255)
+    textSize(width / 20)
+    textAlign(CENTER, CENTER)
+    text('Level Select', width / 2, height / 15)
+    levelButtons.forEach(button => {
+        button.show()
+    })
+}
+
+function gameLoop() {
     background(51)
     if (canZoom) {
         camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
@@ -195,16 +273,26 @@ function draw() {
     updateProjectiles(blueProjectiles, redTroops)
     updateProjectiles(redProjectiles, blueTroops)
 
-
+    /*
     noStroke()
     fill(255)
     text('fps: ' + Math.floor(frameRate()), 50, 50)
+    */
 
+    if (currentLevel) {
+        noStroke()
+        fill(70, 200, 70)
+        textAlign(CORNER)
+        text('$' + currentLevel.money, width / 20, width / 20)
+    }
+
+    /*
     fill(255)
     text(redTroops.length, width / 4, height / 2)
 
     fill(255)
     text(blueTroops.length, width * 3 / 4, height / 2)
+    */
 
     if (!menuOpen) {
         if (mouseX < menu.w / 8) {
@@ -249,7 +337,8 @@ function draw() {
                     break
             }
             if (newTroopGhost) {
-                newTroopGhost.show(50);
+                if (team == 'red' || mode == 'sandbox')
+                    newTroopGhost.show(50);
             }
             if (erasing) {
                 drawSettings('red')
@@ -272,6 +361,10 @@ function draw() {
 
     menu.show()
 
+    if (mode == 'campaign' && currentLevel) {
+        currentLevel.update()
+    }
+
     if (keyIsPressed && keyCode == SHIFT && mouseIsPressed && frameCount % 5 == 0) {
         mouseReleased()
     }
@@ -293,77 +386,95 @@ function updateProjectiles(projectiles, troops) {
 let panning = false
 
 function mouseDragged() {
-    if (canZoom) {
-        let dX = mouseX - pmouseX
-        let dY = mouseY - pmouseY
-        panX += dX
-        panY += dY
-        if (Math.abs(dX) > 10 || Math.abs(dY) > 10) {
-            panning = true
-        }
-    }
-    if (!menuOpen && erasing) {
-        for (let i = 0; i < redTroops.length; i++) {
-            troop = redTroops[i]
-            let r = eraseSize / 2 + troop.size / 2
-            if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
-                redTroops.splice(i, 1)
-                i--
+    if (screen == 'game') {
+        if (canZoom) {
+            let dX = mouseX - pmouseX
+            let dY = mouseY - pmouseY
+            panX += dX
+            panY += dY
+            if (Math.abs(dX) > 10 || Math.abs(dY) > 10) {
+                panning = true
             }
         }
-        for (let i = 0; i < blueTroops.length; i++) {
-            troop = blueTroops[i]
-            let r = eraseSize / 2 + troop.size / 2
-            if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < r * r) {
-                blueTroops.splice(i, 1)
-                i--
+        if (!menuOpen && erasing) {
+            for (let i = 0; i < redTroops.length; i++) {
+                troop = redTroops[i]
+                if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < sqr(eraseSize / 2 + troop.size / 2)) {
+                    if (mode == 'campaign' && currentLevel) {
+                        currentLevel.money += troop.cost
+                    }
+                    redTroops.splice(i, 1)
+                    i--
+                }
+            }
+            if (mode == 'sandbox') {
+                for (let i = 0; i < blueTroops.length; i++) {
+                    troop = blueTroops[i]
+                    if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < sqr(eraseSize / 2 + troop.size / 2)) {
+                        blueTroops.splice(i, 1)
+                        i--
+                    }
+                }
             }
         }
     }
 }
 
 function mouseReleased() {
-    if (!panning && !menuOpen) {
-        let team
-        if (mouseX < width / 2) {
-            team = 'red'
-        } else {
-            team = 'blue'
-        }
+    if (screen == 'game') {
+        if (!panning && !menuOpen) {
+            let team
+            if (mouseX < width / 2) {
+                team = 'red'
+            } else {
+                team = 'blue'
+                if (mode == 'campaign') {
+                    return
+                }
+            }
 
-        newTroop = undefined
-        switch (newTroopId) {
-            case 'soldier':
-                newTroop = new Soldier(mouseX, mouseY, team)
-                break
-            case 'archer':
-                newTroop = new Archer(mouseX, mouseY, team)
-                break
-            case 'necromancer':
-                newTroop = new Necromancer(mouseX, mouseY, team)
-                break
-            case 'summoner':
-                newTroop = new Summoner(mouseX, mouseY, team)
-                break
-            case 'ewizard':
-                newTroop = new EWizard(mouseX, mouseY, team)
-                break
-            case 'shield':
-                newTroop = new Shield(mouseX, mouseY, team)
-                break
-            case 'healer':
-                newTroop = new Healer(mouseX, mouseY, team)
-                break
-            case 'reaper':
-                newTroop = new Reaper(mouseX, mouseY, team)
-                break
-        }
+            newTroop = undefined
+            switch (newTroopId) {
+                case 'soldier':
+                    newTroop = new Soldier(mouseX, mouseY, team)
+                    break
+                case 'archer':
+                    newTroop = new Archer(mouseX, mouseY, team)
+                    break
+                case 'necromancer':
+                    newTroop = new Necromancer(mouseX, mouseY, team)
+                    break
+                case 'summoner':
+                    newTroop = new Summoner(mouseX, mouseY, team)
+                    break
+                case 'ewizard':
+                    newTroop = new EWizard(mouseX, mouseY, team)
+                    break
+                case 'shield':
+                    newTroop = new Shield(mouseX, mouseY, team)
+                    break
+                case 'healer':
+                    newTroop = new Healer(mouseX, mouseY, team)
+                    break
+                case 'reaper':
+                    newTroop = new Reaper(mouseX, mouseY, team)
+                    break
+            }
 
-        if (newTroop) {
-            team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
+            if (newTroop) {
+                if (mode == 'campaign') {
+                    if (currentLevel && currentLevel.money >= newTroop.cost) {
+                        team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
+                        currentLevel.money -= newTroop.cost
+                    }
+                } else if (mode == 'sandbox') {
+                    team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
+                }
+            }
+
         }
+        panning = false
     }
-    panning = false
 }
 
 // function mouseWheel(event) {
@@ -390,16 +501,32 @@ function keyReleased() {
 }
 
 function keyTyped() {
-    if (key == ' ') {
-        battling = !battling;
-    }
-    if (key == 'c') {
-        clearTroops()
+    if (mode == 'sandbox') {
+        if (key == ' ') {
+            battling = !battling;
+        }
+        if (key == 'c') {
+            clearTroops()
+        }
     }
 }
 
 function mousePressed() {
-    if (menuOpen) {
-        menu.onClick()
+    switch (screen) {
+        case 'title':
+            titleButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'level_select':
+            levelButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'game':
+            if (menuOpen) {
+                menu.onClick()
+            }
+            break
     }
 }

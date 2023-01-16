@@ -5,7 +5,7 @@ function Arc(target, team) {
     this.nextTarget;
     this.charges = 10
     this.damage = 10
-    this.range = width / 40
+    this.range = width / 30
 
     this.isDone
 
@@ -24,7 +24,7 @@ function Arc(target, team) {
             if (!foe.isDead && !this.hit.includes(foe) && foe != this.target) {
                 let curDist = distSquared(this.target.pos, foe.pos)
                 if (curDist < dist) {
-                    if (random(0, 1) > 0.5) {
+                    if (random(0, 1) > 0.25) {
                         this.nextTarget = foe
                         dist = curDist
                     }

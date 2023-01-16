@@ -3,7 +3,7 @@ function Zombie(x, y, team) {
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 150
-    this.speed = this.size / 12;
+    this.speed = this.size / 10;
     this.maxSpeed = this.speed;
     this.target = this
     this.maxHitpoints = 30

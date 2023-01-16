@@ -1,5 +1,6 @@
 function Shield(x, y, team) {
     this.name = 'shield'
+    this.cost = 30
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 80

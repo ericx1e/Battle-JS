@@ -1,12 +1,13 @@
 function Soldier(x, y, team) {
     this.name = 'soldier'
+    this.cost = 10
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 100
     this.speed = this.size / 10;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 160
+    this.maxHitpoints = 140
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
     this.attackPower = 10

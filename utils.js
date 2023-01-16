@@ -100,3 +100,18 @@ function randomTroops(team) {
         troops.push(new Necromancer(offset + mult * random(offset - 6 * buffer, offset - 4 * buffer), random(buffer, height - buffer), team))
     }
 }
+
+function changeScreen(newScreen) {
+    clearTroops()
+    switch (newScreen) {
+        case 'title':
+            break
+        case 'level_select':
+            break
+        case 'game':
+            menu = new Menu()
+            break
+    }
+
+    screen = newScreen
+}

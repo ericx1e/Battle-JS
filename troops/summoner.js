@@ -1,5 +1,6 @@
 function Summoner(x, y, team) {
     this.name = 'summoner'
+    this.cost = 80
     this.allies = team == 'red' ? redTroops : blueTroops
 
     this.pos = createVector(x, y)
