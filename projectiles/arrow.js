@@ -1,12 +1,12 @@
 function Arrow(start, target, team) {
     this.pos = createVector(start.x, start.y)
     this.size = width / 250
-    this.speed = this.size / 2
+    this.speed = this.size / 1.5
     this.vel = p5.Vector.sub(target, this.pos).limit(this.speed)
-    this.vel.rotate(random(-0.1, 0.1))
+    this.vel.rotate(random(-0.05, 0.05))
     let drawVec = createVector(this.vel.x, this.vel.y).setMag(this.size)
     this.pos.add(p5.Vector.mult(drawVec, 2))
-    this.damage = 20
+    this.damage = 25
 
     this.show = function () {
         drawSettings(team)

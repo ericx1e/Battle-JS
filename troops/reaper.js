@@ -1,19 +1,23 @@
-function Shield(x, y, team) {
-    this.name = 'shield'
-    this.cost = 30
+function Reaper(x, y, team) {
+    this.name = 'reaper'
+    this.cost = 100
+    this.forces = team == 'red' ? redForces : blueForces
+
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 80
-    this.speed = this.size / 30;
+    this.speed = this.size / 20;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 300
+    this.maxHitpoints = 200
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 3
-    this.attackSpeed = 15 //number of frames between attacks
-    this.attackRange = this.size * 1.5
+    this.attackPower = 35
+    this.attackSpeed = 45 //number of frames between attacks
+    this.attackRange = this.size * 2
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+
+    this.attackRotate = 0
 
     this.armor = 2 // reduces all damage taken
 
@@ -38,20 +42,28 @@ function Shield(x, y, team) {
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        rotate(this.attackRotate)
+        if (this.attackRotate < 0) {
+            this.attackRotate *= 0.90
+            this.attackRotate += PI / 50
+        }
         drawSettings(team, tranparency)
+
+        let s = this.size / 4
+        push()
+        translate(this.size / 2, 0)
+        rotate(PI / 16)
+        line(0, s, 0, -5 * s)
+        let r = s * 10
+        noFill()
+        arc(0, +r / 2 - 5 * s, r, r, -PI / 2, -PI / 2 + PI / 4)
+        arc(0, +r / 2 - 4 * s, r * 2, r, -PI / 2, -PI / 2 + PI / 5.2)
+        pop()
+
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         drawSettings(team, tranparency)
         // noFill();
-        beginShape();
-        vertex(this.size / 4, -this.size / 2.5);
-        vertex((this.size / 1.5 + this.size / 4) / 2, -this.size / 2.1);
-        vertex(this.size / 1.5, -this.size / 2.5);
-        vertex(this.size / 1.5, this.size / 2.5);
-        vertex((this.size / 1.5 + this.size / 4) / 2, this.size / 2.1);
-        vertex(this.size / 4, this.size / 2.5);
-        vertex(this.size / 4, -this.size / 2.5);
-        endShape();
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
         }
@@ -83,12 +95,11 @@ function Shield(x, y, team) {
                 }
             }
         })
-        let others = allies.concat(foes)
 
-        moveUnit(this, others)
+        moveUnit(this, allies.concat(foes))
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
-                this.attack(others);
+                this.attack();
             }
             // this.checkCollision(allies.concat(foes))
         }
@@ -101,12 +112,8 @@ function Shield(x, y, team) {
     }
 
 
-    this.attack = function (others) {
-        takeDamage(this.target, this.attackPower)
-        knockbackUnit(this.target, others)
-
-        // let moveVector = p5.Vector.sub(this.target.pos, this.pos).setMag(this.target.speed * 2)
-        // this.target.pos.add(moveVector)
-        // this.target.speed = -this.maxSpeed
+    this.attack = function () {
+        this.attackRotate = -4 * PI
+        this.forces.push(new ReaperSweep(this, this.attackRange, this.attackPower, team))
     }
 }

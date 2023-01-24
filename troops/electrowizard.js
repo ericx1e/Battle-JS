@@ -1,5 +1,6 @@
 function EWizard(x, y, team) {
     this.name = 'ewizard'
+    this.cost = 60
     this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
     this.pos = createVector(x, y)

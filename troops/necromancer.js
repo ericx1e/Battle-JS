@@ -1,5 +1,6 @@
 function Necromancer(x, y, team) {
     this.name = 'necromancer'
+    this.cost = 60
     this.allies = team == 'red' ? redTroops : blueTroops
     this.toRemove = team == 'red' ? redToRemove : blueToRemove
 
@@ -139,7 +140,12 @@ function Necromancer(x, y, team) {
                 removed++
                 this.toRemove.splice(index, 1)
                 i--
-                this.allies.push(new Zombie(subject.pos.x, subject.pos.y, team))
+                // this.allies.push(new Zombie(subject.pos.x, subject.pos.y, team))
+                this.allies.push(new Zombie(this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
+                while (random(0, 1) > 0.6) {
+                    // this.allies.push(new Zombie(subject.pos.x, subject.pos.y, team))
+                    this.allies.push(new Zombie(this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
+                }
             }
         }
         return removed

@@ -3,13 +3,13 @@ function Zombie(x, y, team) {
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
     this.size = width / 150
-    this.speed = this.size / 15;
+    this.speed = this.size / 10;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 20
+    this.maxHitpoints = 30
     this.hitpoints = 0.25
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 7
+    this.attackPower = 10
     this.attackSpeed = 40 //number of frames between attacks
     this.attackRange = this.size * 1.5
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))

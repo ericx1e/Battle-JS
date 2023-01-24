@@ -10,6 +10,23 @@ function moveUnit(unit, others) {
     // }
 }
 
+function knockbackUnit(unit, others) {
+    // let moveVector = p5.Vector.sub(foe.pos, this.pos).setMag(foe.speed * 2)
+    // foe.pos.add(moveVector)
+    unit.pos.add(p5.Vector.mult(unit.vel, -2))
+    unit.speed = -unit.maxSpeed / 2
+    moveUnit(unit, others)
+}
+
+function moveUnitTowards(unit, dest, others) {
+    if (distSquared(unit.pos, dest) > sqr(unit.attackRange * 0.9)) {
+        unit.vel = p5.Vector.sub(dest, unit.pos).limit(unit.speed)
+        unit.pos.add(unit.vel)
+    }
+    checkCollision(unit, others)
+    checkBoundaries(unit)
+}
+
 function checkCollision(unit, others) {
     let squeezeVel = createVector(0, 0)
     for (let i = 0; i < others.length; i++) {
@@ -20,7 +37,7 @@ function checkCollision(unit, others) {
         }
         let minDist = unit.size / 2 + other.size / 2
         if (distSquared(unit.pos, other.pos) < sqr(minDist)) {
-            let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.speed * random(0.4, 0.5))
+            let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.maxSpeed * random(0.4, 0.5))
             squeezeVel.add(moveVector)
             other.pos.sub(moveVector)
         }
