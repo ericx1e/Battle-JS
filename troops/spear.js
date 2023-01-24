@@ -1,21 +1,25 @@
-function Shield(x, y, team) {
-    this.name = 'shield'
-    this.cost = 30
+function Spear(x, y, team) {
+    this.name = 'spear'
+    this.cost = 60
+    this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
+
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
-    this.size = width / 80
+    this.size = width / 100
     this.speed = this.size / 30;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 300
+    this.maxHitpoints = 120
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 3
-    this.attackSpeed = 15 //number of frames between attacks
-    this.attackRange = this.size * 1.5
+    this.attackPower = 8
+    this.attackSpeed = 30 //number of frames between attacks
+    this.rangedAttackSpeed = 90 //number of frames between attacks
+    this.attackRange = this.size * 3
+    this.rangedAttackRange = this.size * 30
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-
-    this.armor = 2 // reduces all damage taken
+    this.firstRangedAttackFrame = parseInt(random(0, this.rangedAttackSpeed))
+    this.charges = 3
 
     this.takingDamageFrames = 0 //animation for getting hit
 
@@ -41,21 +45,42 @@ function Shield(x, y, team) {
         drawSettings(team, tranparency)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        drawSettings(team, tranparency)
-        // noFill();
-        beginShape();
-        vertex(this.size / 4, -this.size / 2.5);
-        vertex((this.size / 1.5 + this.size / 4) / 2, -this.size / 2.1);
-        vertex(this.size / 1.5, -this.size / 2.5);
-        vertex(this.size / 1.5, this.size / 2.5);
-        vertex((this.size / 1.5 + this.size / 4) / 2, this.size / 2.1);
-        vertex(this.size / 4, this.size / 2.5);
-        vertex(this.size / 4, -this.size / 2.5);
-        endShape();
+        this.drawSpear(this.size / 5, this.size / 5, team, tranparency)
+
+        for (let i = 0; i < this.charges; i++) {
+            push()
+            translate(-this.size / 2, this.size / 3)
+            rotate(-PI / 1.7 + PI / 60 * i)
+            this.drawSpear(0, i / 1.7, team, tranparency)
+            pop()
+        }
+
+        // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
         }
 
+        pop()
+    }
+
+    this.drawSpear = function (x, y, team, tranparency) {
+        push()
+        translate(x, y)
+        drawSettings(team, tranparency)
+        push()
+        translate(this.size * 1.2, 0)
+        line(-this.size * 1.5, 0, 0, 0)
+        noFill()
+        let tipS = this.size / 6
+        beginShape()
+        vertex(0, tipS / 2)
+        vertex(tipS, tipS / 2 * 3 / 4)
+        vertex(3 * tipS, 0)
+        vertex(tipS, -tipS / 2 * 3 / 4)
+        vertex(0, -tipS / 2)
+        vertex(0, tipS / 2)
+        endShape()
+        pop()
         pop()
     }
 
@@ -83,15 +108,21 @@ function Shield(x, y, team) {
                 }
             }
         })
-        let others = allies.concat(foes)
 
-        moveUnit(this, others)
+        moveUnit(this, allies.concat(foes))
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
-                this.attack(others);
+                this.attack();
             }
             // this.checkCollision(allies.concat(foes))
         }
+        if (this.charges > 0 && distSquared(this.pos, this.target.pos) < sqr(this.rangedAttackRange)) {
+            if ((frameCount - this.firstRangedAttackFrame) % this.rangedAttackSpeed == 0) {
+                this.rangedAttack();
+                this.charges--
+            }
+        }
+
 
         // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
 
@@ -101,12 +132,14 @@ function Shield(x, y, team) {
     }
 
 
-    this.attack = function (others) {
+    this.attack = function () {
         takeDamage(this.target, this.attackPower)
-        knockbackUnit(this.target, others)
+        let moveVector = p5.Vector.sub(this.target.pos, this.pos).setMag(this.target.speed * 2)
+        this.target.pos.add(moveVector)
+        this.target.speed = -this.maxSpeed
+    }
 
-        // let moveVector = p5.Vector.sub(this.target.pos, this.pos).setMag(this.target.speed * 2)
-        // this.target.pos.add(moveVector)
-        // this.target.speed = -this.maxSpeed
+    this.rangedAttack = function () {
+        this.projectiles.push(new ThrownSpear(this.pos, this.target.pos, team))
     }
 }

@@ -33,6 +33,7 @@ let titleButtons
 let levels = []
 let currentLevel
 let levelButtons
+let firstOpen = true
 
 let font
 // let fontItalic
@@ -83,7 +84,7 @@ function setup() {
     let levelButtonSize = width / 13
     let levelButtonsPerRow = 8
     levelButtons = [new Button(levelButtonSize * 1.25, width / 40 + levelButtonSize / 4, levelButtonSize, levelButtonSize / 2, 'return_to_title')]
-    for (let level = 0; level < 10; level++) {
+    for (let level = 0; level < 8; level++) {
         levels.push(new Level(level))
         levelButtons.push(new Button(levelButtonSize * 1.25 + (level % levelButtonsPerRow) * levelButtonSize * 1.5, width / 20 + levelButtonSize + parseInt(level / levelButtonsPerRow) * levelButtonSize * 1.5, levelButtonSize, levelButtonSize, 'level' + level))
     }
@@ -295,6 +296,15 @@ function gameLoop() {
     */
 
     if (!menuOpen) {
+        if (firstOpen) {
+            fill(255)
+            noStroke()
+            textSize(width / 50)
+            textAlign(CORNER, CORNER)
+            text("\t<<\tclick the left edge to open menu", 0, width / 20)
+            stroke(255)
+            strokeWeight(width / 500)
+        }
         if (mouseX < menu.w / 8) {
             menu.showBit()
             if (mouseX < menu.w / 16 && mouseIsPressed) {
@@ -313,6 +323,9 @@ function gameLoop() {
                     break;
                 case 'archer':
                     newTroopGhost = new Archer(mouseX, mouseY, team)
+                    break
+                case 'spear':
+                    newTroopGhost = new Spear(mouseX, mouseY, team)
                     break
                 case 'necromancer':
                     newTroopGhost = new Necromancer(mouseX, mouseY, team)
@@ -351,6 +364,7 @@ function gameLoop() {
 
     if (menuOpen && mouseX > menu.w * 1.5) {
         menuOpen = false
+        firstOpen = false
     }
 
     if (menuOpen) {
@@ -441,6 +455,9 @@ function mouseReleased() {
                 case 'archer':
                     newTroop = new Archer(mouseX, mouseY, team)
                     break
+                case 'spear':
+                    newTroop = new Spear(mouseX, mouseY, team)
+                    break
                 case 'necromancer':
                     newTroop = new Necromancer(mouseX, mouseY, team)
                     break
@@ -458,6 +475,9 @@ function mouseReleased() {
                     break
                 case 'reaper':
                     newTroop = new Reaper(mouseX, mouseY, team)
+                    break
+                case 'wall':
+                    newTroop = new Wall(mouseX, mouseY, team)
                     break
             }
 

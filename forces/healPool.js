@@ -24,7 +24,7 @@ function HealPool(x, y, range, team) {
         if (this.isDone) return
 
         allies.forEach(ally => {
-            if (distSquared(this.pos, ally.pos) < sqr(this.range)) {
+            if (!ally.isDead && distSquared(this.pos, ally.pos) < sqr(this.range)) {
                 if (ally.id == 'healer') {
                     heal(ally, this.heal / 3)
                 } else {

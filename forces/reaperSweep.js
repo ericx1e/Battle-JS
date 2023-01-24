@@ -30,9 +30,10 @@ function ReaperSweep(unit, range, damage, team) {
                             heal(unit, (unit.maxHitpoints - unit.hitpoints) * .05)
                         }
                     }
-                    let moveVector = p5.Vector.sub(foe.pos, this.pos).setMag(foe.speed * 2)
-                    foe.pos.add(moveVector)
-                    foe.speed = -foe.maxSpeed / 2
+                    knockbackUnit(foe, allies.concat(foes))
+                    // let moveVector = p5.Vector.sub(foe.pos, this.pos).setMag(foe.speed * 2)
+                    // foe.pos.add(moveVector)
+                    // foe.speed = -foe.maxSpeed / 2
                 }
             })
         }

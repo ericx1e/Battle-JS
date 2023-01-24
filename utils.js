@@ -84,6 +84,9 @@ function randomTroops(team) {
     for (let i = 0; i < 40; i++) {
         troops.push(new Shield(offset + mult * random(buffer / 2, buffer), random(buffer, height - buffer), team))
     }
+    for (let i = 0; i < 7; i++) {
+        troops.push(new Spear(offset + mult * random(buffer, buffer * 3 / 2), random(buffer, height - buffer), team))
+    }
     for (let i = 0; i < 10; i++) {
         troops.push(new Reaper(offset + mult * random(buffer, buffer * 2), random(buffer, height - buffer), team))
     }

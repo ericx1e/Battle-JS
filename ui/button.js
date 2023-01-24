@@ -16,6 +16,9 @@ function Button(x, y, w, h, id) {
         case 'archer':
             this.model = new Archer(modelX, modelY, modelTeam)
             break
+        case 'spear':
+            this.model = new Spear(modelX, modelY, modelTeam)
+            break
         case 'necromancer':
             this.model = new Necromancer(modelX, modelY, modelTeam)
             break
@@ -33,6 +36,9 @@ function Button(x, y, w, h, id) {
             break
         case 'reaper':
             this.model = new Reaper(modelX, modelY, modelTeam)
+            break
+        case 'wall':
+            this.model = new Wall(modelX, modelY, modelTeam)
             break
     }
 
@@ -331,6 +337,10 @@ function Button(x, y, w, h, id) {
             case 'reaper':
                 title = 'Reaper'
                 description = 'Tough and fast demons that deal damage in an area around them and heal with each takedown'
+                break
+            case 'spear':
+                title = 'Spear'
+                description = 'Long range melee units with a few thrown spears that pierce enemies'
                 break
         }
 

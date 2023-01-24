@@ -1,21 +1,19 @@
-function Shield(x, y, team) {
-    this.name = 'shield'
-    this.cost = 30
+function Assassin(x, y, team) {
+    this.name = 'assassin'
+    this.cost = 10
     this.pos = createVector(x, y)
     this.vel = createVector(0, 0)
-    this.size = width / 80
-    this.speed = this.size / 30;
+    this.size = width / 75
+    this.speed = this.size / 2;
     this.maxSpeed = this.speed;
     this.target = this
-    this.maxHitpoints = 300
+    this.maxHitpoints = 140
     this.hitpoints = this.maxHitpoints
     this.targetHitpoints = this.hitpoints
-    this.attackPower = 3
-    this.attackSpeed = 15 //number of frames between attacks
+    this.attackPower = 10
+    this.attackSpeed = 40 //number of frames between attacks
     this.attackRange = this.size * 1.5
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-
-    this.armor = 2 // reduces all damage taken
 
     this.takingDamageFrames = 0 //animation for getting hit
 
@@ -41,17 +39,7 @@ function Shield(x, y, team) {
         drawSettings(team, tranparency)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        drawSettings(team, tranparency)
-        // noFill();
-        beginShape();
-        vertex(this.size / 4, -this.size / 2.5);
-        vertex((this.size / 1.5 + this.size / 4) / 2, -this.size / 2.1);
-        vertex(this.size / 1.5, -this.size / 2.5);
-        vertex(this.size / 1.5, this.size / 2.5);
-        vertex((this.size / 1.5 + this.size / 4) / 2, this.size / 2.1);
-        vertex(this.size / 4, this.size / 2.5);
-        vertex(this.size / 4, -this.size / 2.5);
-        endShape();
+        // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--
         }
@@ -83,12 +71,11 @@ function Shield(x, y, team) {
                 }
             }
         })
-        let others = allies.concat(foes)
 
-        moveUnit(this, others)
+        moveUnit(this, allies.concat(foes))
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
-                this.attack(others);
+                this.attack();
             }
             // this.checkCollision(allies.concat(foes))
         }
@@ -101,12 +88,7 @@ function Shield(x, y, team) {
     }
 
 
-    this.attack = function (others) {
+    this.attack = function () {
         takeDamage(this.target, this.attackPower)
-        knockbackUnit(this.target, others)
-
-        // let moveVector = p5.Vector.sub(this.target.pos, this.pos).setMag(this.target.speed * 2)
-        // this.target.pos.add(moveVector)
-        // this.target.speed = -this.maxSpeed
     }
 }

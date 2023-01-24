@@ -7,7 +7,7 @@ function Menu() {
     let buttonsPerRow = 3
 
     let buttonSize = this.h / 15
-    let troopButtonIds = ['soldier', 'archer', 'necromancer', 'summoner', 'ewizard', 'shield', 'healer', 'reaper']
+    let troopButtonIds = ['soldier', 'archer', 'spear', 'necromancer', 'summoner', 'ewizard', 'shield', 'healer', 'reaper']
 
     let utilButtonIds
     if (mode == 'sandbox') {
