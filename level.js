@@ -2,7 +2,7 @@ function Level(n) {
     this.n = n
     this.complete = false
     this.locked = true
-    let budgets = [80, 70, 250, 700, 300, 300, 750, 2000]
+    let budgets = [90, 80, 70, 250, 700, 300, 400, 750, 2000]
     this.budget = budgets[n]
     this.money = this.budget
     this.started = false
@@ -21,19 +21,24 @@ function Level(n) {
         let offset = width / 2
         switch (n) {
             case 0:
+                for (let i = 0; i < 8; i++) {
+                    troops.push(new Soldier(offset + width / 8, height / 2 + (i - 3.5) * width / 32, team))
+                }
+                break
+            case 1:
                 for (let i = 0; i < 9; i++) {
                     troops.push(new Soldier(offset + width / 8 + width / 32 * i, height / 2, team))
                 }
                 break
-            case 1:
+            case 2:
                 for (let i = 0; i < 5; i++) {
-                    troops.push(new Soldier(offset + width / 12, height / 2.4 + i * width / 32, team))
+                    troops.push(new Soldier(offset + width / 12, height / 2 + i * width / 32, team))
                 }
                 for (let i = 0; i < 3; i++) {
                     troops.push(new Archer(offset + width / 8, height / 12 + i * width / 32, team))
                 }
                 break
-            case 2:
+            case 3:
                 for (let i = 0; i < 10; i++) {
                     troops.push(new Soldier(offset + width / 12, height / 2 + (i - 5) * width / 32, team))
                 }
@@ -44,7 +49,7 @@ function Level(n) {
                     troops.push(new Soldier(offset + width / 8, height / 2 + (i - 5) * width / 32, team))
                 }
                 break
-            case 3:
+            case 4:
                 for (let i = 0; i < 16; i++) {
                     troops.push(new Soldier(offset + width / 12, height / 2 + (i - 8) * width / 32, team))
                 }
@@ -60,18 +65,18 @@ function Level(n) {
                 break
             // troops.push(new Necromancer(offset + width / 4, height / 2, team))
             // troops.push(new Summoner(offset + width / 4 + width / 16, height / 2, team))
-            case 4:
+            case 5:
                 for (let i = 0; i < 10; i++) {
                     troops.push(new Summoner(offset + width / 2.5, height / 2 + (i - 5) * width / 32, team))
                 }
                 break
-            case 5:
+            case 6:
                 for (let i = 0; i < 10; i++) {
                     troops.push(new Shield(offset + width / 6, height / 2 + (i - 5) * width / 32, team))
                     troops.push(new Archer(offset + width / 3, height / 2 + (i - 5) * width / 32, team))
                 }
                 break
-            case 6:
+            case 7:
                 for (let i = 0; i < 7; i++) {
                     troops.push(new Reaper(offset + width / 6, height / 2 + (i - 3) * width / 32, team))
                     troops.push(new EWizard(offset + width / 3, height / 2 + (i - 3) * width / 16, team))
@@ -80,11 +85,11 @@ function Level(n) {
                 troops.push(new Summoner(offset + width / 5, height / 2 - width / 7, team))
                 troops.push(new Necromancer(offset + width / 5, height / 2, team))
                 break
-            case 7:
+            case 8:
                 for (let i = 0; i < 29; i++) {
                     troops.push(new Shield(offset + width / 32, height / 2 + (i - 15) * width / 64, team))
-                    troops.push(new Spear(offset + width / 32 + width / 16, height / 2 + (i - 15) * width / 64, team))
                     troops.push(new Spear(offset + width / 16, height / 2 + (i - 15) * width / 64, team))
+                    // troops.push(new Spear(offset + width / 32 + width / 16, height / 2 + (i - 15) * width / 64, team))
                 }
                 break
         }

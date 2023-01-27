@@ -27,7 +27,7 @@ function ReaperSweep(unit, range, damage, team) {
                     takeDamage(foe, this.damage)
                     if (foe.hitpoints <= 0) {
                         if (foe.name != 'zombie') {
-                            heal(unit, (unit.maxHitpoints - unit.hitpoints) * .05)
+                            heal(unit, (unit.maxHitpoints - unit.hitpoints) * .15)
                         }
                     }
                     knockbackUnit(foe, allies.concat(foes))

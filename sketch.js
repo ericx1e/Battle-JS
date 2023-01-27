@@ -84,7 +84,7 @@ function setup() {
     let levelButtonSize = width / 13
     let levelButtonsPerRow = 8
     levelButtons = [new Button(levelButtonSize * 1.25, width / 40 + levelButtonSize / 4, levelButtonSize, levelButtonSize / 2, 'return_to_title')]
-    for (let level = 0; level < 8; level++) {
+    for (let level = 0; level < 9; level++) {
         levels.push(new Level(level))
         levelButtons.push(new Button(levelButtonSize * 1.25 + (level % levelButtonsPerRow) * levelButtonSize * 1.5, width / 20 + levelButtonSize + parseInt(level / levelButtonsPerRow) * levelButtonSize * 1.5, levelButtonSize, levelButtonSize, 'level' + level))
     }
@@ -280,7 +280,7 @@ function gameLoop() {
     text('fps: ' + Math.floor(frameRate()), 50, 50)
     */
 
-    if (currentLevel) {
+    if (mode == 'campaign' && currentLevel) {
         noStroke()
         fill(70, 200, 70)
         textAlign(CORNER)
@@ -301,7 +301,7 @@ function gameLoop() {
             noStroke()
             textSize(width / 50)
             textAlign(CORNER, CORNER)
-            text("\t<<\tclick the left edge to open menu", 0, width / 20)
+            text("\t<<\tclick the left edge to open menu", 0, width / 10)
             stroke(255)
             strokeWeight(width / 500)
         }
@@ -362,7 +362,7 @@ function gameLoop() {
         }
     }
 
-    if (menuOpen && mouseX > menu.w * 1.5) {
+    if (menuOpen && mouseX > menu.w * 1.3) {
         menuOpen = false
         firstOpen = false
     }
