@@ -114,6 +114,30 @@ function Button(x, y, w, h, id) {
                     textSize(this.h / 4)
                     text('Campaign', this.x, this.y)
                     break
+                case 'title_versus':
+                    if (this.isTouchingMouse()) {
+                        fill(185)
+                    } else {
+                        fill(210)
+                    }
+                    rect(this.x, this.y, this.w, this.h, this.h / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.h / 4)
+                    text('Versus', this.x, this.y)
+                    break
+                case 'versus_join':
+                    if (this.isTouchingMouse()) {
+                        fill(185)
+                    } else {
+                        fill(210)
+                    }
+                    rect(this.x, this.y, this.w, this.h, this.h / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.h / 4)
+                    text('Join', this.x, this.y)
+                    break
                 case 'return_to_title':
                     if (this.isTouchingMouse()) {
                         fill(185)
@@ -245,6 +269,29 @@ function Button(x, y, w, h, id) {
                     case 'title_sandbox':
                         mode = 'sandbox'
                         changeScreen('game')
+                        break
+                    case 'title_versus':
+                        mode = 'versus'
+                        changeScreen('versus_lobby')
+                        break
+                    case 'versus_join':
+                        changeScreen('versus_loading')
+                        room = lobbyName
+                        console.log("room:", room);
+                        mode = 'sandbox'
+
+                        if (room) {
+                            partyConnect(
+                                "wss://p5partyserver.herokuapp.com/",
+                                "select_room",
+                                room,
+                                changeScreen('game')
+                            );
+
+                            shared = partyLoadShared("shared", { redTroops: [], blueTroops: [], battling: false, battleFrameCount: 0 });
+                            my = partyLoadMyShared();
+                            guests = partyLoadGuestShareds();
+                        }
                         break
                     case 'return_to_title':
                         changeScreen('title')
