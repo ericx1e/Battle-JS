@@ -3,6 +3,7 @@ p5.disableFriendlyErrors = true;
 let screen = 'title'
 let mode
 
+let battleFrameCount = 0
 let redTroops = []
 let redToRemove = []
 let redProjectiles = []
@@ -38,6 +39,9 @@ let firstOpen = true
 let font
 // let fontItalic
 
+let shared
+let lobbyName
+
 function preload() {
     font = loadFont("Ubuntu/Ubuntu-Regular.ttf")
     // fontItalic = loadFont("Ubuntu/Ubuntu-Italic.ttf")
@@ -47,6 +51,7 @@ let canvasWidth
 let canvasHeight
 
 function setup() {
+    // frameRate(10)
     textFont(font)
     canvasWidth = window.innerWidth * 3 / 4
     canvasHeight = window.innerHeight * 3 / 4
@@ -56,30 +61,8 @@ function setup() {
 
     eraseSize = width / 40
 
-    // for (let i = 0; i < 500; i++) {
-    //     i % 2 == 0 ? redTroops.push(new Soldier(random(0, width), random(0, height), 'red')) : blueTroops.push(new Soldier(random(0, width), random(0, height), 'blue'))
-    //     i % 2 == 0 ? redTroops.push(new Archer(random(0, width), random(0, height), 'red')) : blueTroops.push(new Archer(random(0, width), random(0, height), 'blue'))
-    // }
-
-    /*
-    for (let x = 20; x < width / 2; x += width / 25) {
-        for (let y = 20; y < height; y += height / 15) {
-            if (x <= 20) {
-                blueTroops.push(new Archer(width - x, y, 'blue'))
-                redTroops.push(new Archer(x, y, 'red'))
-            } else {
-                blueTroops.push(new Soldier(width - x, y, 'blue'))
-                redTroops.push(new Soldier(x, y, 'red'))
-            }
-        }
-
-    }
-    redTroops.push(new Necromancer(0, height / 2, 'red'), new Summoner(1, height / 2, 'red'), new EWizard(3, height / 2, 'red'))
-    blueTroops.push(new Necromancer(width, height / 2, 'blue'), new Summoner(width - 1, height / 2, 'blue'), new EWizard(width - 3, height / 2, 'blue'))
-    */
-
-    let buttonSize = width / 10
-    titleButtons = [new Button(width / 2 - 1.25 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2 + 1.25 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox')]
+    let buttonSize = width / 14
+    titleButtons = [new Button(width / 2 - 2.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 2.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus')]
 
     let levelButtonSize = width / 13
     let levelButtonsPerRow = 8
@@ -89,6 +72,9 @@ function setup() {
         levelButtons.push(new Button(levelButtonSize * 1.25 + (level % levelButtonsPerRow) * levelButtonSize * 1.5, width / 20 + levelButtonSize + parseInt(level / levelButtonsPerRow) * levelButtonSize * 1.5, levelButtonSize, levelButtonSize, 'level' + level))
     }
     levels[0].locked = false
+
+    let versusButtonSize = width / 13
+    versusLobbyButtons = [new Button(versusButtonSize * 1.25, width / 40 + versusButtonSize / 4, versusButtonSize, versusButtonSize / 2, 'return_to_title'), new Button(width / 2, height * 4 / 5, versusButtonSize * 2, versusButtonSize, 'versus_join')]
 }
 
 function draw() {
@@ -98,6 +84,12 @@ function draw() {
             break
         case 'level_select':
             levelSelectLoop()
+            break
+        case 'versus_lobby':
+            versusLobbyLoop()
+            break
+        case 'versus_loading':
+            versusLoadingLoop()
             break
         case 'game':
             gameLoop()
@@ -149,8 +141,45 @@ function levelSelectLoop() {
     })
 }
 
+function versusLobbyLoop() {
+    background(39)
+    fill(255)
+    textSize(width / 20)
+    textAlign(CENTER, CENTER)
+    text('Enter Lobby Name', width / 2, height / 15)
+    versusLobbyButtons.forEach(button => {
+        button.show()
+    })
+
+    fill(255)
+    textSize(height / 8)
+    text(lobbyName + '_', width / 2, height / 2.5)
+
+}
+
+function versusLoadingLoop() {
+    background(39)
+    push()
+    translate(width / 2, height / 2)
+    // rotate(battleFrameCount / 60)
+    fill(255)
+    textSize(width / 10)
+    text('loading', 0, 0)
+    pop()
+    // if (shared) {
+    //     mode = 'sandbox'
+    //     changeScreen('game')
+    // }
+}
+
 function gameLoop() {
     background(51)
+    if (battling) {
+        battleFrameCount++
+        if (shared) {
+        }
+    }
+
     if (canZoom) {
         camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
     }
@@ -221,6 +250,40 @@ function gameLoop() {
             ri++;
         }
     }
+
+    if (shared && shared.redTroops && shared.blueTroops) {
+        if (partyIsHost()) {
+            shared.battling = battling
+            // blueTroops = []
+            for (let i = blueTroops.length; i < shared.blueTroops.length; i++) {
+                pos = shared.blueTroops[i]
+                if (pos) {
+                    let troop = new Soldier(pos.x, pos.y, 'blue')
+                    console.log(pos.firstAttackFrame)
+
+                    troop.firstAttackFrame = 0 + pos.firstAttackFrame
+                    console.log(troop.firstAttackFrame)
+                    blueTroops.push(troop)
+                    shared.blueTroops[i] = undefined
+                }
+            }
+            // shared.blueTroops = []
+        } else {
+            battling = shared.battling
+            // redTroops = []
+            for (let i = redTroops.length; i < shared.redTroops.length; i++) {
+                pos = shared.redTroops[i]
+                if (pos) {
+                    let troop = new Soldier(pos.x, pos.y, 'red')
+                    troop.firstAttackFrame = 0 + pos.firstAttackFrame
+                    redTroops.push(troop)
+                    shared.redTroops[i] = undefined
+                }
+            }
+            // shared.redTroops = []
+        }
+    }
+
 
     for (let i = 0; i < blueForces.length; i++) {
         let force = blueForces[i]
@@ -305,7 +368,7 @@ function gameLoop() {
             stroke(255)
             strokeWeight(width / 500)
         }
-        if (mouseX < menu.w / 8) {
+        if (mouseX < menu.w / 16) {
             menu.showBit()
             if (mouseX < menu.w / 16 && mouseIsPressed) {
                 menuOpen = true
@@ -350,8 +413,9 @@ function gameLoop() {
                     break
             }
             if (newTroopGhost) {
-                if (team == 'red' || mode == 'sandbox')
+                if (team == 'red' || mode == 'sandbox') {
                     newTroopGhost.show(50);
+                }
             }
             if (erasing) {
                 drawSettings('red')
@@ -379,9 +443,10 @@ function gameLoop() {
         currentLevel.update()
     }
 
-    if (keyIsPressed && keyCode == SHIFT && mouseIsPressed && frameCount % 5 == 0) {
+    if (keyIsPressed && keyCode == SHIFT && mouseIsPressed && battleFrameCount % 5 == 0) {
         mouseReleased()
     }
+
 }
 
 function updateProjectiles(projectiles, troops) {
@@ -411,24 +476,28 @@ function mouseDragged() {
             }
         }
         if (!menuOpen && erasing) {
-            for (let i = 0; i < redTroops.length; i++) {
-                troop = redTroops[i]
-                if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < sqr(eraseSize / 2 + troop.size / 2)) {
-                    if (mode == 'campaign' && currentLevel) {
-                        currentLevel.money += troop.cost
-                    }
-                    redTroops.splice(i, 1)
-                    i--
-                }
+            eraser()
+        }
+    }
+}
+
+function eraser() {
+    for (let i = 0; i < redTroops.length; i++) {
+        troop = redTroops[i]
+        if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < sqr(eraseSize / 2 + troop.size / 2)) {
+            if (mode == 'campaign' && currentLevel) {
+                currentLevel.money += troop.cost
             }
-            if (mode == 'sandbox') {
-                for (let i = 0; i < blueTroops.length; i++) {
-                    troop = blueTroops[i]
-                    if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < sqr(eraseSize / 2 + troop.size / 2)) {
-                        blueTroops.splice(i, 1)
-                        i--
-                    }
-                }
+            redTroops.splice(i, 1)
+            i--
+        }
+    }
+    if (mode == 'sandbox') {
+        for (let i = 0; i < blueTroops.length; i++) {
+            troop = blueTroops[i]
+            if (distSquaredVal(mouseX, mouseY, troop.pos.x, troop.pos.y) < sqr(eraseSize / 2 + troop.size / 2)) {
+                blueTroops.splice(i, 1)
+                i--
             }
         }
     }
@@ -438,15 +507,57 @@ function mouseReleased() {
     if (screen == 'game') {
         if (!panning && !menuOpen) {
             let team
+
             if (mouseX < width / 2) {
                 team = 'red'
+                if (shared && !partyIsHost()) {
+                    return
+                }
             } else {
                 team = 'blue'
                 if (mode == 'campaign') {
                     return
                 }
+                if (shared && partyIsHost()) {
+                    return
+                }
             }
 
+            // if (shared) {
+            //     newTroop = undefined
+            //     switch (newTroopId) {
+            //         case 'soldier':
+            //             newTroop = new Soldier(mouseX, mouseY, team)
+            //             break
+            //         case 'archer':
+            //             newTroop = new Archer(mouseX, mouseY, team)
+            //             break
+            //         case 'spear':
+            //             newTroop = new Spear(mouseX, mouseY, team)
+            //             break
+            //         case 'necromancer':
+            //             newTroop = new Necromancer(mouseX, mouseY, team)
+            //             break
+            //         case 'summoner':
+            //             newTroop = new Summoner(mouseX, mouseY, team)
+            //             break
+            //         case 'ewizard':
+            //             newTroop = new EWizard(mouseX, mouseY, team)
+            //             break
+            //         case 'shield':
+            //             newTroop = new Shield(mouseX, mouseY, team)
+            //             break
+            //         case 'healer':
+            //             newTroop = new Healer(mouseX, mouseY, team)
+            //             break
+            //         case 'reaper':
+            //             newTroop = new Reaper(mouseX, mouseY, team)
+            //             break
+            //         case 'wall':
+            //             newTroop = new Wall(mouseX, mouseY, team)
+            //             break
+            //     }
+            // }
             newTroop = undefined
             switch (newTroopId) {
                 case 'soldier':
@@ -490,10 +601,13 @@ function mouseReleased() {
                 } else if (mode == 'sandbox') {
                     team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
                 }
+                if (shared) {
+                    team == 'red' ? shared.redTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, }) : shared.blueTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, })
+                }
             }
 
+            panning = false
         }
-        panning = false
     }
 }
 
@@ -514,6 +628,9 @@ let keyIsPressed = false
 
 function keyPressed() {
     keyIsPressed = true
+    if (keyCode == BACKSPACE) {
+        lobbyName = lobbyName.substring(0, lobbyName.length - 1)
+    }
 }
 
 function keyReleased() {
@@ -521,7 +638,15 @@ function keyReleased() {
 }
 
 function keyTyped() {
-    if (mode == 'sandbox') {
+    if (screen == 'versus_lobby') {
+        if (key.length == 1 && lobbyName.length < 4) {
+            let keyUpper = key.toUpperCase()
+            let ascii = keyUpper.charCodeAt(0)
+            if (ascii >= 48 && ascii <= 57 || ascii >= 65 && ascii <= 90) {
+                lobbyName += keyUpper
+            }
+        }
+    } else if (screen == 'game' && mode == 'sandbox') {
         if (key == ' ') {
             battling = !battling;
         }
@@ -532,6 +657,9 @@ function keyTyped() {
 }
 
 function mousePressed() {
+    if (!menuOpen && erasing) {
+        eraser()
+    }
     switch (screen) {
         case 'title':
             titleButtons.forEach(button => {
@@ -540,6 +668,11 @@ function mousePressed() {
             break
         case 'level_select':
             levelButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'versus_lobby':
+            versusLobbyButtons.forEach(button => {
                 button.onClick()
             })
             break

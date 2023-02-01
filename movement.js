@@ -37,7 +37,8 @@ function checkCollision(unit, others) {
         }
         let minDist = unit.size / 2 + other.size / 2
         if (distSquared(unit.pos, other.pos) < sqr(minDist)) {
-            let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.maxSpeed * random(0.4, 0.5))
+            // let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.maxSpeed * random(0.4, 0.5))
+            let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.maxSpeed * 0.5)
             squeezeVel.add(moveVector)
             other.pos.sub(moveVector)
         }

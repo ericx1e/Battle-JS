@@ -87,7 +87,7 @@ function Shield(x, y, team) {
 
         moveUnit(this, others)
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
-            if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+            if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack(others);
             }
             // this.checkCollision(allies.concat(foes))

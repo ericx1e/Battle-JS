@@ -101,7 +101,7 @@ function Healer(x, y, team) {
 
         moveUnitTowards(this, sumVector, allies.concat(foes))
 
-        if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+        if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
             this.attack();
         }
 

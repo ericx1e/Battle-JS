@@ -111,13 +111,13 @@ function Spear(x, y, team) {
 
         moveUnit(this, allies.concat(foes))
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
-            if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+            if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }
             // this.checkCollision(allies.concat(foes))
         }
         if (this.charges > 0 && distSquared(this.pos, this.target.pos) < sqr(this.rangedAttackRange)) {
-            if ((frameCount - this.firstRangedAttackFrame) % this.rangedAttackSpeed == 0) {
+            if ((battleFrameCount - this.firstRangedAttackFrame) % this.rangedAttackSpeed == 0) {
                 this.rangedAttack();
                 this.charges--
             }

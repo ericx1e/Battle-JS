@@ -94,7 +94,7 @@ function EWizard(x, y, team) {
 
         moveUnit(this, allies.concat(foes))
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
-            if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+            if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }
             // this.checkCollision(allies.concat(foes))

@@ -13,7 +13,7 @@ function Zombie(x, y, team) {
     this.attackSpeed = 40 //number of frames between attacks
     this.attackRange = this.size * 1.5
     this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-    this.spawnFrame = frameCount
+    this.spawnFrame = battleFrameCount
 
     this.takingDamageFrames = 0 //animation for getting hit
 
@@ -54,7 +54,7 @@ function Zombie(x, y, team) {
             this.target = this
             return
         }
-        if (frameCount - this.spawnFrame < this.maxHitpoints * 4 - 1) {
+        if (battleFrameCount - this.spawnFrame < this.maxHitpoints * 4 - 1) {
             if (this.hitpoints <= 0) {
                 this.isDead = true
             }
@@ -83,7 +83,7 @@ function Zombie(x, y, team) {
 
         moveUnit(this, allies.concat(foes))
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
-            if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+            if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }
             // this.checkCollision(allies.concat(foes))

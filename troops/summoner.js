@@ -94,7 +94,7 @@ function Summoner(x, y, team) {
         let removed = 0
 
         moveUnit(this, allies.concat(foes))
-        if ((frameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+        if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
             removed = this.attack();
         }
         // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)

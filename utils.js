@@ -111,8 +111,12 @@ function changeScreen(newScreen) {
             break
         case 'level_select':
             break
+        case 'versus_lobby':
+            lobbyName = ""
+            break
         case 'game':
             menu = new Menu()
+            randomSeed(1)
             break
     }
 
