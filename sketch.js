@@ -53,8 +53,9 @@ let canvasHeight
 function setup() {
     // frameRate(10)
     textFont(font)
-    canvasWidth = window.innerWidth * 3 / 4
-    canvasHeight = window.innerHeight * 3 / 4
+    canvasWidth = window.innerWidth * 5 / 6
+    // canvasHeight = window.innerHeight * 3 / 4
+    canvasHeight = canvasWidth / 16 * 9
     canvas = createCanvas(canvasWidth, canvasHeight)
     canvas.position((window.innerWidth - canvasWidth) / 2, (window.innerHeight - canvasHeight) / 2)
     zoom = (height / 2) / tan(PI / 6)
@@ -258,11 +259,8 @@ function gameLoop() {
             for (let i = blueTroops.length; i < shared.blueTroops.length; i++) {
                 pos = shared.blueTroops[i]
                 if (pos) {
-                    let troop = new Soldier(pos.x, pos.y, 'blue')
-                    console.log(pos.firstAttackFrame)
-
+                    let troop = new Soldier(map(pos.x, 0, pos.w, 0, width), map(pos.y, 0, pos.h, 0, height), 'blue')
                     troop.firstAttackFrame = 0 + pos.firstAttackFrame
-                    console.log(troop.firstAttackFrame)
                     blueTroops.push(troop)
                     shared.blueTroops[i] = undefined
                 }
@@ -274,7 +272,7 @@ function gameLoop() {
             for (let i = redTroops.length; i < shared.redTroops.length; i++) {
                 pos = shared.redTroops[i]
                 if (pos) {
-                    let troop = new Soldier(pos.x, pos.y, 'red')
+                    let troop = new Soldier(map(pos.x, 0, pos.w, 0, width), map(pos.y, 0, pos.h, 0, height), 'red')
                     troop.firstAttackFrame = 0 + pos.firstAttackFrame
                     redTroops.push(troop)
                     shared.redTroops[i] = undefined
@@ -522,42 +520,6 @@ function mouseReleased() {
                     return
                 }
             }
-
-            // if (shared) {
-            //     newTroop = undefined
-            //     switch (newTroopId) {
-            //         case 'soldier':
-            //             newTroop = new Soldier(mouseX, mouseY, team)
-            //             break
-            //         case 'archer':
-            //             newTroop = new Archer(mouseX, mouseY, team)
-            //             break
-            //         case 'spear':
-            //             newTroop = new Spear(mouseX, mouseY, team)
-            //             break
-            //         case 'necromancer':
-            //             newTroop = new Necromancer(mouseX, mouseY, team)
-            //             break
-            //         case 'summoner':
-            //             newTroop = new Summoner(mouseX, mouseY, team)
-            //             break
-            //         case 'ewizard':
-            //             newTroop = new EWizard(mouseX, mouseY, team)
-            //             break
-            //         case 'shield':
-            //             newTroop = new Shield(mouseX, mouseY, team)
-            //             break
-            //         case 'healer':
-            //             newTroop = new Healer(mouseX, mouseY, team)
-            //             break
-            //         case 'reaper':
-            //             newTroop = new Reaper(mouseX, mouseY, team)
-            //             break
-            //         case 'wall':
-            //             newTroop = new Wall(mouseX, mouseY, team)
-            //             break
-            //     }
-            // }
             newTroop = undefined
             switch (newTroopId) {
                 case 'soldier':
@@ -602,7 +564,7 @@ function mouseReleased() {
                     team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
                 }
                 if (shared) {
-                    team == 'red' ? shared.redTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, }) : shared.blueTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, })
+                    team == 'red' ? shared.redTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, w: width, h: height }) : shared.blueTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, w: width, h: height })
                 }
             }
 
