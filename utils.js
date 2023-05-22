@@ -117,6 +117,9 @@ function changeScreen(newScreen) {
         case 'game':
             menu = new Menu()
             randomSeed(1)
+            if (mode == 'autochess') {
+                autochessEngine = new AutochessEngine()
+            }
             break
     }
 

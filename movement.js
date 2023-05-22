@@ -40,9 +40,11 @@ function checkCollision(unit, others) {
             // let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.maxSpeed * random(0.4, 0.5))
             let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.maxSpeed * 0.5)
             squeezeVel.add(moveVector)
+            if (unit.name == 'zombie' && other.name == 'summoner') continue
             other.pos.sub(moveVector)
         }
     }
+    if (unit.name == 'summoner' && other.name == 'zombie') return
     unit.pos.add(squeezeVel)
 }
 

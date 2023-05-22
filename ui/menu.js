@@ -7,13 +7,21 @@ function Menu() {
     let buttonsPerRow = 3
 
     let buttonSize = this.h / 15
-    let troopButtonIds = ['soldier', 'archer', 'spear', 'necromancer', 'summoner', 'ewizard', 'shield', 'healer', 'reaper']
+    let troopButtonIds
+
+    if (mode == 'autochess') {
+        troopButtonIds = []
+    } else {
+        troopButtonIds = ['soldier', 'archer', 'spear', 'necromancer', 'summoner', 'ewizard', 'shield', 'healer', 'reaper']
+    }
 
     let utilButtonIds
     if (mode == 'sandbox') {
         utilButtonIds = ['rand_all', 'rand_blue', 'rand_red', 'erase', 'clear']
     } else if (mode == 'campaign') {
         utilButtonIds = ['erase', 'restart']
+    } else if (mode == 'autochess') {
+        utilButtonIds = []
     }
     this.buttons = []
 

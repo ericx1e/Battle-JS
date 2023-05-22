@@ -40,6 +40,10 @@ function Button(x, y, w, h, id) {
         case 'wall':
             this.model = new Wall(modelX, modelY, modelTeam)
             break
+        case 'shop_soldier':
+            this.model = new Soldier(modelX, modelY, modelTeam)
+            this.model.size *= 5
+            break
     }
 
     this.show = function () {
@@ -57,12 +61,14 @@ function Button(x, y, w, h, id) {
             }
             rect(this.x, this.y, this.w, this.h, this.h / 5, this.h / 5)
             this.model.show()
-            /*
-            fill(0)
-            textAlign(CENTER, CENTER)
-            textSize(this.h / 4)
-            text(id, this.x, this.y + this.s / 4)
-            */
+
+            let coinS = w / 4
+            switch (id) {
+                case 'shop_soldier':
+                    drawCoin(x + w / 2 - coinS, y + h / 2 - coinS, coinS, 1)
+
+                    break
+            }
         } else if (id.includes('level')) {
             let n = parseInt(id.substring(5)) //Any text after 'level'
             let level = levels[n]
@@ -101,6 +107,18 @@ function Button(x, y, w, h, id) {
                     textAlign(CENTER, CENTER)
                     textSize(this.h / 4)
                     text('Sandbox', this.x, this.y)
+                    break
+                case 'title_autochess':
+                    if (this.isTouchingMouse()) {
+                        fill(185)
+                    } else {
+                        fill(210)
+                    }
+                    rect(this.x, this.y, this.w, this.h, this.h / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.h / 4)
+                    text('Autochess', this.x, this.y)
                     break
                 case 'title_campaign':
                     if (this.isTouchingMouse()) {
@@ -245,6 +263,8 @@ function Button(x, y, w, h, id) {
                     textSize(this.h / 4)
                     text(id, this.x, this.y)
                     break
+                case 'shop_refresh':
+                    break
             }
         }
     }
@@ -253,7 +273,16 @@ function Button(x, y, w, h, id) {
         if (this.isTouchingMouse()) {
             erasing = false
             if (this.model) {
-                newTroopId = id;
+                if (mode == 'autochess') {
+                    switch (id) {
+                        case 'shop_soldier':
+                            redTroops.push(new Soldier(width / 4, height / 2, 'red'))
+                            break
+                    }
+                    return true
+                } else {
+                    newTroopId = id;
+                }
             } else if (id.includes('level')) {
                 let n = parseInt(id.substring(5)) //Any text after 'level'
                 let level = levels[n]
@@ -265,6 +294,10 @@ function Button(x, y, w, h, id) {
                     case 'title_campaign':
                         mode = 'campaign'
                         changeScreen('level_select')
+                        break
+                    case 'title_autochess':
+                        mode = 'autochess'
+                        changeScreen('game')
                         break
                     case 'title_sandbox':
                         mode = 'sandbox'

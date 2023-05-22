@@ -42,6 +42,8 @@ let font
 let shared
 let lobbyName
 
+let autochessEngine
+
 function preload() {
     font = loadFont("Ubuntu/Ubuntu-Regular.ttf")
     // fontItalic = loadFont("Ubuntu/Ubuntu-Italic.ttf")
@@ -63,7 +65,7 @@ function setup() {
     eraseSize = width / 40
 
     let buttonSize = width / 14
-    titleButtons = [new Button(width / 2 - 2.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 2.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus')]
+    titleButtons = [new Button(width / 2 - 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2 - 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_autochess'), new Button(width / 2 + 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus')]
 
     let levelButtonSize = width / 13
     let levelButtonsPerRow = 8
@@ -115,9 +117,9 @@ function titleLoop() {
     noStroke()
     fill(255)
     textAlign(CENTER, CENTER)
-    text('Battle Simulator', width / 2, height / 4)
+    text('Battle Dots', width / 2, height / 4)
     fill(255, 100)
-    text('Battle Simulator', width / 2 + offset, height / 4)
+    text('Battle Dots', width / 2 + offset, height / 4)
     textSize(titleSize / 2)
     offset = titleSize / 24
     fill(255)
@@ -346,6 +348,17 @@ function gameLoop() {
         fill(70, 200, 70)
         textAlign(CORNER)
         text('$' + currentLevel.money, width / 20, width / 20)
+    }
+
+    if (mode == 'autochess') {
+        noStroke()
+        fill(70, 200, 70)
+        textAlign(CORNER)
+        // text('$' + currentLevel.money, width / 20, width / 20)
+        if (autochessEngine) {
+            autochessEngine.showShop()
+        }
+        drawCoin(100, 100, 50, 2)
     }
 
     /*
@@ -642,6 +655,24 @@ function mousePressed() {
             if (menuOpen) {
                 menu.onClick()
             }
+            if (mode == 'autochess') {
+                autochessEngine.onClick()
+            }
             break
     }
+}
+
+function drawCoin(x, y, s, n) {
+    strokeWeight(s / 10)
+    stroke(200, 170, 20)
+    fill(255, 220, 50)
+    ellipse(x, y, s)
+    fill(200, 170, 20)
+    rectMode(CENTER)
+    noStroke()
+    rect(x, y, s / 10, s / 2, s / 40, s / 40)
+    fill(120)
+    textAlign(CENTER, CENTER)
+    textSize(s / 2)
+    text(`x${n}`, x + s / 2, y + s / 3)
 }
