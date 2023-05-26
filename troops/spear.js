@@ -1,36 +1,40 @@
 function Spear(x, y, team) {
-    this.name = 'spear'
-    this.cost = 60
-    this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
-
     this.pos = createVector(x, y)
-    this.vel = createVector(0, 0)
-    this.size = width / 100
-    this.speed = this.size / 30;
-    this.maxSpeed = this.speed;
-    this.target = this
-    this.maxHitpoints = 120
-    this.hitpoints = this.maxHitpoints
-    this.targetHitpoints = this.hitpoints
-    this.attackPower = 8
-    this.attackSpeed = 30 //number of frames between attacks
-    this.rangedAttackSpeed = 90 //number of frames between attacks
-    this.attackRange = this.size * 3
-    this.rangedAttackRange = this.size * 30
-    this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-    this.firstRangedAttackFrame = parseInt(random(0, this.rangedAttackSpeed))
-    this.charges = 3
+    this.reset = function () {
+        this.name = 'spear'
+        this.cost = 60
+        this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
-    this.takingDamageFrames = 0 //animation for getting hit
+        this.vel = createVector(0, 0)
+        this.size = width / 100
+        this.speed = this.size / 30;
+        this.maxSpeed = this.speed;
+        this.target = this
+        this.maxHitpoints = 120
+        this.hitpoints = this.maxHitpoints
+        this.targetHitpoints = this.hitpoints
+        this.attackPower = 8
+        this.attackSpeed = 30 //number of frames between attacks
+        this.rangedAttackSpeed = 90 //number of frames between attacks
+        this.attackRange = this.size * 3
+        this.rangedAttackRange = this.size * 30
+        this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+        this.firstRangedAttackFrame = parseInt(random(0, this.rangedAttackSpeed))
+        this.charges = 3
 
-    this.isDead = false
+        this.takingDamageFrames = 0 //animation for getting hit
+
+        this.isDead = false
+    }
+
+    this.reset()
 
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
 
         if (healthBars) {
-            strokeWeight(width / 500)
+            strokeWeight(this.size / 5)
             stroke(150)
             line(-this.size, -this.size, this.size, -this.size)
             colorMode(HSB, this.maxHitpoints, 255, 255, 255)
@@ -38,11 +42,11 @@ function Spear(x, y, team) {
             line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
         }
 
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         this.drawSpear(this.size / 5, this.size / 5, team, tranparency)
@@ -66,7 +70,7 @@ function Spear(x, y, team) {
     this.drawSpear = function (x, y, team, tranparency) {
         push()
         translate(x, y)
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         push()
         translate(this.size * 1.2, 0)
         line(-this.size * 1.5, 0, 0, 0)

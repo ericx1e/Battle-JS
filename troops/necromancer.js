@@ -1,34 +1,38 @@
 function Necromancer(x, y, team) {
-    this.name = 'necromancer'
-    this.cost = 60
-    this.allies = team == 'red' ? redTroops : blueTroops
-    this.toRemove = team == 'red' ? redToRemove : blueToRemove
-
     this.pos = createVector(x, y)
-    this.vel = createVector(0, 0)
-    this.size = width / 100
-    this.speed = this.size / 25;
-    this.maxSpeed = this.speed;
-    this.target = this
-    this.maxHitpoints = 100
-    this.hitpoints = this.maxHitpoints
-    this.targetHitpoints = this.hitpoints
-    this.attackPower = 0
-    this.attackSpeed = 1 //number of frames between attacks
-    this.attackRange = this.size * 25
-    this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-    // this.drawSpeed = this.size * 2
+    this.reset = function () {
+        this.name = 'necromancer'
+        this.cost = 60
+        this.allies = team == 'red' ? redTroops : blueTroops
+        this.toRemove = team == 'red' ? redToRemove : blueToRemove
 
-    this.takingDamageFrames = 0 //animation for getting hit
+        this.vel = createVector(0, 0)
+        this.size = width / 100
+        this.speed = this.size / 25;
+        this.maxSpeed = this.speed;
+        this.target = this
+        this.maxHitpoints = 100
+        this.hitpoints = this.maxHitpoints
+        this.targetHitpoints = this.hitpoints
+        this.attackPower = 0
+        this.attackSpeed = 1 //number of frames between attacks
+        this.attackRange = this.size * 25
+        this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+        // this.drawSpeed = this.size * 2
 
-    this.isDead = false
+        this.takingDamageFrames = 0 //animation for getting hit
+
+        this.isDead = false
+    }
+
+    this.reset()
 
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
 
         if (healthBars) {
-            strokeWeight(width / 500)
+            strokeWeight(this.size / 5)
             stroke(150)
             line(-this.size, -this.size, this.size, -this.size)
             colorMode(HSB, this.maxHitpoints, 255, 255, 255)
@@ -36,17 +40,17 @@ function Necromancer(x, y, team) {
             line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
         }
 
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         // rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noStroke()
         rectMode(CENTER)
         // rect(0, 0, this.size, this.size);
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
 
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
 
         noFill();
         line(this.size / 2, this.size / 3, this.size / 2, -this.size / 2)

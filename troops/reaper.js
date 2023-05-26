@@ -1,36 +1,40 @@
 function Reaper(x, y, team) {
-    this.name = 'reaper'
-    this.cost = 100
-    this.forces = team == 'red' ? redForces : blueForces
-
     this.pos = createVector(x, y)
-    this.vel = createVector(0, 0)
-    this.size = width / 80
-    this.speed = this.size / 20;
-    this.maxSpeed = this.speed;
-    this.target = this
-    this.maxHitpoints = 200
-    this.hitpoints = this.maxHitpoints
-    this.targetHitpoints = this.hitpoints
-    this.attackPower = 35
-    this.attackSpeed = 45 //number of frames between attacks
-    this.attackRange = this.size * 2
-    this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+    this.reset = function () {
+        this.name = 'reaper'
+        this.cost = 100
+        this.forces = team == 'red' ? redForces : blueForces
 
-    this.attackRotate = 0
+        this.vel = createVector(0, 0)
+        this.size = width / 80
+        this.speed = this.size / 20;
+        this.maxSpeed = this.speed;
+        this.target = this
+        this.maxHitpoints = 200
+        this.hitpoints = this.maxHitpoints
+        this.targetHitpoints = this.hitpoints
+        this.attackPower = 35
+        this.attackSpeed = 45 //number of frames between attacks
+        this.attackRange = this.size * 2
+        this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
-    this.armor = 2 // reduces all damage taken
+        this.attackRotate = 0
 
-    this.takingDamageFrames = 0 //animation for getting hit
+        this.armor = 2 // reduces all damage taken
 
-    this.isDead = false
+        this.takingDamageFrames = 0 //animation for getting hit
+
+        this.isDead = false
+    }
+
+    this.reset()
 
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
 
         if (healthBars) {
-            strokeWeight(width / 500)
+            strokeWeight(this.size / 5)
             stroke(150)
             line(-this.size, -this.size, this.size, -this.size)
             colorMode(HSB, this.maxHitpoints, 255, 255, 255)
@@ -38,7 +42,7 @@ function Reaper(x, y, team) {
             line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
         }
 
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
@@ -47,7 +51,7 @@ function Reaper(x, y, team) {
             this.attackRotate *= 0.90
             this.attackRotate += PI / 50
         }
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
 
         let s = this.size / 4
         push()
@@ -62,7 +66,7 @@ function Reaper(x, y, team) {
 
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         // noFill();
         if (this.takingDamageFrames > 0) {
             this.takingDamageFrames--

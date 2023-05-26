@@ -1,30 +1,34 @@
 function Zombie(x, y, team) {
-    this.name = 'zombie'
     this.pos = createVector(x, y)
-    this.vel = createVector(0, 0)
-    this.size = width / 150
-    this.speed = this.size / 10;
-    this.maxSpeed = this.speed;
-    this.target = this
-    this.maxHitpoints = 30
-    this.hitpoints = 0.25
-    this.targetHitpoints = this.hitpoints
-    this.attackPower = 10
-    this.attackSpeed = 40 //number of frames between attacks
-    this.attackRange = this.size * 1.5
-    this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
-    this.spawnFrame = battleFrameCount
+    this.reset = function () {
+        this.name = 'zombie'
+        this.vel = createVector(0, 0)
+        this.size = width / 150
+        this.speed = this.size / 10;
+        this.maxSpeed = this.speed;
+        this.target = this
+        this.maxHitpoints = 30
+        this.hitpoints = 0.25
+        this.targetHitpoints = this.hitpoints
+        this.attackPower = 10
+        this.attackSpeed = 40 //number of frames between attacks
+        this.attackRange = this.size * 1.5
+        this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+        this.spawnFrame = battleFrameCount
 
-    this.takingDamageFrames = 0 //animation for getting hit
+        this.takingDamageFrames = 0 //animation for getting hit
 
-    this.isDead = false
+        this.isDead = false
+    }
+
+    this.reset()
 
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
 
         if (healthBars) {
-            strokeWeight(width / 500)
+            strokeWeight(this.size / 5)
             stroke(150)
             line(-this.size, -this.size, this.size, -this.size)
             colorMode(HSB, this.maxHitpoints, 255, 255, 255)
@@ -32,11 +36,11 @@ function Zombie(x, y, team) {
             line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
         }
 
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         // sphere(this.size / 2)

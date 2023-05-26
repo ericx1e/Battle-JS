@@ -181,6 +181,9 @@ function gameLoop() {
         battleFrameCount++
         if (shared) {
         }
+        if (mode == 'autochess') {
+
+        }
     }
 
     if (canZoom) {
@@ -206,6 +209,17 @@ function gameLoop() {
 
     let blueHasNecro = false
     let redHasNecro = false
+
+    // if(mode == 'autochess') {
+    //     if(battling) {
+    //         if(redTroops.length == 0) {
+    //             battling = false
+
+    //         } else if(blueTroops.length == 0) {
+    //             battling = false
+    //         }
+    //     }
+    // }
 
     while (blueTroops[bi] || redTroops[ri]) {
         let blueTroop = blueTroops[bi]
@@ -249,6 +263,10 @@ function gameLoop() {
                 if (redTroop.name == 'necromancer' && removed) {
                     ri -= removed
                 }
+            } else if (mode == 'autochess' && autochessEngine.status == 'preparing') {
+                moveUnit(redTroop, redTroops)
+                // if (redTroop.pos.x > width / 2) {
+                // }
             }
             ri++;
         }
@@ -356,9 +374,9 @@ function gameLoop() {
         textAlign(CORNER)
         // text('$' + currentLevel.money, width / 20, width / 20)
         if (autochessEngine) {
-            autochessEngine.showShop()
+            autochessEngine.update()
+            autochessEngine.showUI()
         }
-        drawCoin(100, 100, 50, 2)
     }
 
     /*
@@ -375,9 +393,9 @@ function gameLoop() {
             noStroke()
             textSize(width / 50)
             textAlign(CORNER, CORNER)
-            text("\t<<\tclick the left edge to open menu", 0, width / 10)
+            // text("\t<<\tclick the left edge to open menu", 0, width / 10)
             stroke(255)
-            strokeWeight(width / 500)
+            strokeWeight(this.size / 5)
         }
         if (mouseX < menu.w / 16) {
             menu.showBit()
@@ -514,9 +532,44 @@ function eraser() {
     }
 }
 
+function mousePressed() {
+    if (!menuOpen && erasing) {
+        eraser()
+    }
+    switch (screen) {
+        case 'title':
+            titleButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'level_select':
+            levelButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'versus_lobby':
+            versusLobbyButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'game':
+            if (menuOpen) {
+                menu.onClick()
+            }
+            if (mode == 'autochess') {
+                autochessEngine.onMouseDown()
+            }
+            break
+    }
+}
+
 function mouseReleased() {
     if (screen == 'game') {
         if (!panning && !menuOpen) {
+            if (mode == 'autochess') {
+                autochessEngine.onMouseRelease()
+                return
+            }
             let team
 
             if (mouseX < width / 2) {
@@ -628,37 +681,6 @@ function keyTyped() {
         if (key == 'c') {
             clearTroops()
         }
-    }
-}
-
-function mousePressed() {
-    if (!menuOpen && erasing) {
-        eraser()
-    }
-    switch (screen) {
-        case 'title':
-            titleButtons.forEach(button => {
-                button.onClick()
-            })
-            break
-        case 'level_select':
-            levelButtons.forEach(button => {
-                button.onClick()
-            })
-            break
-        case 'versus_lobby':
-            versusLobbyButtons.forEach(button => {
-                button.onClick()
-            })
-            break
-        case 'game':
-            if (menuOpen) {
-                menu.onClick()
-            }
-            if (mode == 'autochess') {
-                autochessEngine.onClick()
-            }
-            break
     }
 }
 

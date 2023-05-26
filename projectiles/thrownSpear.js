@@ -39,7 +39,7 @@ function ThrownSpear(start, target, team) {
     this.drawSpear = function (x, y, team, tranparency) {
         push()
         translate(x, y)
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         push()
         translate(this.size * 1.2, 0)
         line(-this.size * 1.5, 0, 0, 0)
