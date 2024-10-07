@@ -39,7 +39,7 @@ function ThrownSpear(start, target, team) {
     this.drawSpear = function (x, y, team, tranparency) {
         push()
         translate(x, y)
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         push()
         translate(this.size * 1.2, 0)
         line(-this.size * 1.5, 0, 0, 0)
@@ -57,19 +57,18 @@ function ThrownSpear(start, target, team) {
         pop()
     }
 
-    this.move = function (targets) {
+    this.move = function () {
         this.pos.add(this.vel)
 
         // this.vel.mult(0.98)
         if (this.vel.mag() <= this.speed / 5) {
             return true
         }
-        for (let i = 0; i < targets.length; i++) {
-            other = targets[i];
-            if (other == this || other.isDead) {
-                continue
-            }
 
+        let targetTeam = team == 'blue' ? 'red' : 'blue'
+        let collided = checkCollision(this.pos, this.size / 2, targetTeam)
+        if (collided.length) {
+            other = collided[0]
             if (!this.hit.includes(other) && distSquared(this.pos, other.pos) < sqr(this.size / 2 + other.size)) {
                 takeDamage(other, this.damage)
                 this.hit.push(other)
@@ -82,10 +81,9 @@ function ThrownSpear(start, target, team) {
                 // other.pos.add(moveVector)
                 // other.speed = -other.maxSpeed
             }
-
-            if (this.pos.x + this.size < 0 || this.pos.x + this.size > width || this.pos.y + this.size < 0 || this.pos.y + this.size > height) {
-                return true
-            }
+        }
+        if (this.pos.x - this.size < 0 || this.pos.x + this.size > width || this.pos.y - this.size < 0 || this.pos.y + this.size > height) {
+            return true
         }
     }
 }

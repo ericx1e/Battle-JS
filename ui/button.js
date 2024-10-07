@@ -40,16 +40,53 @@ function Button(x, y, w, h, id) {
         case 'wall':
             this.model = new Wall(modelX, modelY, modelTeam)
             break
+        case 'shop_refresh':
+            this.shopCost = 1
+            break
+        case 'shop_soldier':
+            this.model = new Soldier(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 2
+            break
+        case 'shop_archer':
+            this.model = new Archer(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 3
+            break
+        case 'shop_shield':
+            this.model = new Shield(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 2
+            break
+        case 'shop_zombie':
+            this.model = new Zombie(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 3
+            break
+        case 'shop_soldier_health':
+            this.model = new Soldier(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 4
+            break
+        case 'shop_archer_spread':
+            this.model = new Archer(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 5
+            break
     }
 
     this.show = function () {
         rectMode(CENTER)
         noStroke()
 
+        let coinS = w / 4
+
         if (this.model) {
             if (this.isTouchingMouse()) {
                 if (menuOpen) {
                     this.extraInfo(id)
+                } else if (mode == 'autochess') {
+                    // this.extraInfo(id) //TODO
                 }
                 fill(230)
             } else {
@@ -57,12 +94,29 @@ function Button(x, y, w, h, id) {
             }
             rect(this.x, this.y, this.w, this.h, this.h / 5, this.h / 5)
             this.model.show()
-            /*
-            fill(0)
-            textAlign(CENTER, CENTER)
-            textSize(this.h / 4)
-            text(id, this.x, this.y + this.s / 4)
-            */
+
+            if (mode == 'autochess') {
+                switch (id) {
+                    case 'shop_soldier_health':
+                        noStroke()
+                        fill(50, 230, 50)
+                        textSize(this.w / 2)
+                        textAlign(CENTER, CENTER)
+                        text('+', this.x + this.model.size / 2, this.y - this.model.size / 2)
+                        break
+                    case 'shop_archer_spread':
+                        noStroke()
+                        fill(50, 230, 50)
+                        textSize(this.w / 4)
+                        textAlign(CENTER, CENTER)
+                        text('x3', this.x + this.model.size, this.y - this.model.size)
+                        break
+                }
+            }
+
+            if (this.shopCost) {
+                drawCoin(x + w / 2 - coinS, y + h / 2 - coinS, coinS, this.shopCost)
+            }
         } else if (id.includes('level')) {
             let n = parseInt(id.substring(5)) //Any text after 'level'
             let level = levels[n]
@@ -101,6 +155,18 @@ function Button(x, y, w, h, id) {
                     textAlign(CENTER, CENTER)
                     textSize(this.h / 4)
                     text('Sandbox', this.x, this.y)
+                    break
+                case 'title_autochess':
+                    if (this.isTouchingMouse()) {
+                        fill(185)
+                    } else {
+                        fill(210)
+                    }
+                    rect(this.x, this.y, this.w, this.h, this.h / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.h / 4)
+                    text('Autochess', this.x, this.y)
                     break
                 case 'title_campaign':
                     if (this.isTouchingMouse()) {
@@ -245,6 +311,19 @@ function Button(x, y, w, h, id) {
                     textSize(this.h / 4)
                     text(id, this.x, this.y)
                     break
+                case 'shop_refresh':
+                    if (this.isTouchingMouse()) {
+                        fill(185)
+                    } else {
+                        fill(210)
+                    }
+                    rect(this.x, this.y, this.w, this.h, this.h / 5, this.h / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.h / 4)
+                    text('refresh', this.x, this.y)
+                    drawCoin(x + w / 2 - coinS, y + h / 2 - coinS, coinS, this.shopCost)
+                    break
             }
         }
     }
@@ -253,7 +332,41 @@ function Button(x, y, w, h, id) {
         if (this.isTouchingMouse()) {
             erasing = false
             if (this.model) {
-                newTroopId = id;
+                if (mode == 'autochess') {
+                    if (this.shopCost && autochessEngine.gold >= this.shopCost) {
+                        switch (id) {
+                            case 'shop_soldier':
+                                redTroops.push(new Soldier(width / 4 + random(-1, 1), height / 2 + random(-1, 1), 'red'))
+                                autochessEngine.gold -= this.shopCost
+                                break
+                            case 'shop_archer':
+                                redTroops.push(new Archer(width / 4 + random(-1, 1), height / 2 + random(-1, 1), 'red'))
+                                autochessEngine.gold -= this.shopCost
+                                break
+                            case 'shop_shield':
+                                redTroops.push(new Shield(width / 4 + random(-1, 1), height / 2 + random(-1, 1), 'red'))
+                                autochessEngine.gold -= this.shopCost
+                                break
+                            case 'shop_zombie':
+                                for (let i = 0; i < 6; i++) {
+                                    redTroops.push(new Zombie(width / 4 + random(-1, 1), height / 2 + random(-1, 1), 'red'))
+                                }
+                                autochessEngine.gold -= this.shopCost
+                                break
+                            case 'shop_soldier_health':
+                                autochessEngine.buffs.push('soldier_health')
+                                autochessEngine.gold -= this.shopCost
+                                break
+                            case 'shop_archer_spread':
+                                autochessEngine.buffs.push('archer_spread')
+                                autochessEngine.gold -= this.shopCost
+                                break
+                        }
+                        return true
+                    }
+                } else {
+                    newTroopId = id;
+                }
             } else if (id.includes('level')) {
                 let n = parseInt(id.substring(5)) //Any text after 'level'
                 let level = levels[n]
@@ -265,6 +378,10 @@ function Button(x, y, w, h, id) {
                     case 'title_campaign':
                         mode = 'campaign'
                         changeScreen('level_select')
+                        break
+                    case 'title_autochess':
+                        mode = 'autochess'
+                        changeScreen('game')
                         break
                     case 'title_sandbox':
                         mode = 'sandbox'
@@ -297,10 +414,22 @@ function Button(x, y, w, h, id) {
                         changeScreen('title')
                         break
                     case 'start':
-                        battling = !battling;
-                        if (mode == 'campaign') {
-                            currentLevel.started = true
-                            menuOpen = false
+                        battling = !battling
+                        switch (mode) {
+                            case 'campaign':
+                                currentLevel.started = true
+                                menuOpen = false
+                                break
+                            case 'autochess':
+                                if (autochessEngine.status == 'preparing') {
+                                    autochessEngine.savedTroops = redTroops.map((troop) => { troop.reset(); return troop }) // copy array
+                                    autochessEngine.savedPositions = redTroops.map((troop) => createVector(troop.pos.x, troop.pos.y))
+                                    // autochessEngine.savedTroops = redTroops.map((troop) => troop)
+                                    autochessEngine.status = 'battling'
+                                    randomTroops('blue', autochessEngine.stage)
+                                    console.log(blueTroops)
+                                }
+                                break
                         }
                         break
                     case 'rand_all':
@@ -326,6 +455,12 @@ function Button(x, y, w, h, id) {
                         break
                     case 'restart':
                         currentLevel.load()
+                        break
+                    case 'shop_refresh':
+                        if (autochessEngine.gold >= this.shopCost) {
+                            autochessEngine.gold -= this.shopCost
+                            autochessEngine.generateShop()
+                        }
                         break
                 }
             }
@@ -391,12 +526,26 @@ function Button(x, y, w, h, id) {
                 break
         }
 
+        switch (id) {
+            case 'shop_soldier':
+                title = 'Summon Soldier'
+                description = 'Summoners a soldier'
+                break
+        }
+
         if (title && description) {
-            text(title, x, titleY)
-            textSize(width / 75)
-            text(description, x, descY, w)
-            fill(100, 150, 100)
-            text('$' + this.model.cost, x, h - titleY)
+            if (mode == 'autochess') {
+                text(title, mouseX, mouseY)
+                textSize(width / 75)
+                text(description, mouseX, mouseY, w)
+                fill(100, 150, 100)
+            } else {
+                text(title, x, titleY)
+                textSize(width / 75)
+                text(description, x, descY, w)
+                fill(100, 150, 100)
+                text('$' + this.model.cost, x, h - titleY)
+            }
         }
     }
 

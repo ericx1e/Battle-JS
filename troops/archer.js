@@ -1,32 +1,37 @@
 function Archer(x, y, team) {
-    this.name = 'archer'
-    this.cost = 20
-    this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
-
     this.pos = createVector(x, y)
-    this.vel = createVector(0, 0)
-    this.size = width / 100
-    this.speed = this.size / 15;
-    this.maxSpeed = this.speed;
-    this.target = this
-    this.maxHitpoints = 50
-    this.hitpoints = this.maxHitpoints
-    this.targetHitpoints = this.hitpoints
-    this.attackPower = 0
-    this.attackSpeed = 80 //number of frames between attacks
-    this.attackRange = this.size * 40
-    this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+    this.reset = function () {
+        this.name = 'archer'
+        this.team = team
+        this.cost = 20
+        this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
-    this.takingDamageFrames = 0 //animation for getting hit
+        this.vel = createVector(0, 0)
+        this.size = width / 100
+        this.speed = this.size / 15;
+        this.maxSpeed = this.speed;
+        this.target = this
+        this.maxHitpoints = 50
+        this.hitpoints = this.maxHitpoints
+        this.targetHitpoints = this.hitpoints
+        this.attackPower = 0
+        this.attackSpeed = 80 //number of frames between attacks
+        this.attackRange = this.size * 40
+        this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
-    this.isDead = false
+        this.takingDamageFrames = 0 //animation for getting hit
+
+        this.isDead = false
+    }
+
+    this.reset()
 
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
 
         if (healthBars) {
-            strokeWeight(width / 500)
+            strokeWeight(this.size / 5)
             stroke(150)
             line(-this.size, -this.size, this.size, -this.size)
             colorMode(HSB, this.maxHitpoints, 255, 255, 255)
@@ -34,14 +39,14 @@ function Archer(x, y, team) {
             line(-this.size, -this.size, -this.size + 2 * this.size * this.hitpoints / this.maxHitpoints, -this.size)
         }
 
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
         rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
-        drawSettings(team, tranparency)
+        drawSettings(team, tranparency, this.size)
         noFill();
         beginShape();
         vertex(this.size / 2, -this.size / 1.2);
@@ -72,20 +77,9 @@ function Archer(x, y, team) {
             this.speed += this.maxSpeed / 100
         }
 
-        this.target = foes[0]
+        updateTarget(this, foes)
 
-        let targetDist = distSquared(this.pos, this.target.pos)
-        foes.forEach(foe => {
-            if (!foe.isDead) {
-                let dist = distSquared(this.pos, foe.pos)
-                if (dist < targetDist) {
-                    this.target = foe
-                    targetDist = dist
-                }
-            }
-        })
-
-        moveUnit(this, allies.concat(foes))
+        moveUnit(this)
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
@@ -103,5 +97,12 @@ function Archer(x, y, team) {
 
     this.attack = function () {
         this.projectiles.push(new Arrow(this.pos, this.target.pos, team))
+        if (mode == 'autochess') {
+            if (autochessEngine && autochessEngine.buffs.includes('archer_spread') && team == 'red') {
+                for (let i = 0; i < 2; i++) {
+                    this.projectiles.push(new Arrow(this.pos, this.target.pos, team))
+                }
+            }
+        }
     }
 }

@@ -2,6 +2,8 @@ p5.disableFriendlyErrors = true;
 
 let screen = 'title'
 let mode
+let spacialGrid = []
+let cellSize
 
 let battleFrameCount = 0
 let redTroops = []
@@ -42,6 +44,8 @@ let font
 let shared
 let lobbyName
 
+let autochessEngine
+
 function preload() {
     font = loadFont("Ubuntu/Ubuntu-Regular.ttf")
     // fontItalic = loadFont("Ubuntu/Ubuntu-Italic.ttf")
@@ -51,6 +55,8 @@ let canvasWidth
 let canvasHeight
 
 function setup() {
+    cellSize = width / 5
+
     // frameRate(10)
     textFont(font)
     canvasWidth = window.innerWidth * 5 / 6
@@ -63,7 +69,7 @@ function setup() {
     eraseSize = width / 40
 
     let buttonSize = width / 14
-    titleButtons = [new Button(width / 2 - 2.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 2.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus')]
+    titleButtons = [new Button(width / 2 - 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2 - 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_autochess'), new Button(width / 2 + 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus')]
 
     let levelButtonSize = width / 13
     let levelButtonsPerRow = 8
@@ -115,9 +121,9 @@ function titleLoop() {
     noStroke()
     fill(255)
     textAlign(CENTER, CENTER)
-    text('Battle Simulator', width / 2, height / 4)
+    text('Battle Dots', width / 2, height / 4)
     fill(255, 100)
-    text('Battle Simulator', width / 2 + offset, height / 4)
+    text('Battle Dots', width / 2 + offset, height / 4)
     textSize(titleSize / 2)
     offset = titleSize / 24
     fill(255)
@@ -179,6 +185,9 @@ function gameLoop() {
         battleFrameCount++
         if (shared) {
         }
+        if (mode == 'autochess') {
+
+        }
     }
 
     if (canZoom) {
@@ -205,6 +214,18 @@ function gameLoop() {
     let blueHasNecro = false
     let redHasNecro = false
 
+    // if(mode == 'autochess') {
+    //     if(battling) {
+    //         if(redTroops.length == 0) {
+    //             battling = false
+
+    //         } else if(blueTroops.length == 0) {
+    //             battling = false
+    //         }
+    //     }
+    // }
+
+    allUnits = []
     while (blueTroops[bi] || redTroops[ri]) {
         let blueTroop = blueTroops[bi]
         let redTroop = redTroops[ri]
@@ -213,6 +234,7 @@ function gameLoop() {
             if (blueTroop.name == 'necromancer') {
                 blueHasNecro = true
             }
+            allUnits.push(blueTroop)
             blueTroop.show()
             if (battling) {
                 let removed = blueTroop.update(blueTroops, redTroops)
@@ -234,6 +256,7 @@ function gameLoop() {
             if (redTroop.name == 'necromancer') {
                 redHasNecro = true
             }
+            allUnits.push(redTroop)
             redTroop.show()
             if (battling) {
                 let removed = redTroop.update(redTroops, blueTroops)
@@ -247,9 +270,15 @@ function gameLoop() {
                 if (redTroop.name == 'necromancer' && removed) {
                     ri -= removed
                 }
+            } else if (mode == 'autochess' && autochessEngine.status == 'preparing') {
+                moveUnit(redTroop, redTroops)
+                // if (redTroop.pos.x > width / 2) {
+                // }
             }
             ri++;
         }
+
+        updateGrid(allUnits)
     }
 
     if (shared && shared.redTroops && shared.blueTroops) {
@@ -282,10 +311,10 @@ function gameLoop() {
         }
     }
 
-
+    // TODO: combine forces into one list
     for (let i = 0; i < blueForces.length; i++) {
         let force = blueForces[i]
-        force.update(blueTroops, redTroops)
+        force.update()
         if (force.isDone) {
             blueForces.splice(i, 1)
         }
@@ -293,7 +322,7 @@ function gameLoop() {
 
     for (let i = 0; i < redForces.length; i++) {
         let force = redForces[i]
-        force.update(redTroops, blueTroops)
+        force.update()
         if (force.isDone) {
             redForces.splice(i, 1)
         }
@@ -332,8 +361,8 @@ function gameLoop() {
         redToRemove.splice(i, 1)
     }
 
-    updateProjectiles(blueProjectiles, redTroops)
-    updateProjectiles(redProjectiles, blueTroops)
+    updateProjectiles(blueProjectiles)
+    updateProjectiles(redProjectiles)
 
     /*
     noStroke()
@@ -346,6 +375,17 @@ function gameLoop() {
         fill(70, 200, 70)
         textAlign(CORNER)
         text('$' + currentLevel.money, width / 20, width / 20)
+    }
+
+    if (mode == 'autochess') {
+        noStroke()
+        fill(70, 200, 70)
+        textAlign(CORNER)
+        // text('$' + currentLevel.money, width / 20, width / 20)
+        if (autochessEngine) {
+            autochessEngine.update()
+            autochessEngine.showUI()
+        }
     }
 
     /*
@@ -362,9 +402,9 @@ function gameLoop() {
             noStroke()
             textSize(width / 50)
             textAlign(CORNER, CORNER)
-            text("\t<<\tclick the left edge to open menu", 0, width / 10)
+            // text("\t<<\tclick the left edge to open menu", 0, width / 10)
             stroke(255)
-            strokeWeight(width / 500)
+            strokeWeight(this.size / 5)
         }
         if (mouseX < menu.w / 16) {
             menu.showBit()
@@ -441,18 +481,18 @@ function gameLoop() {
         currentLevel.update()
     }
 
-    if (keyIsPressed && keyCode == SHIFT && mouseIsPressed && battleFrameCount % 5 == 0) {
+    if (keyIsPressed && keyCode == SHIFT && mouseIsPressed) {
         mouseReleased()
     }
 
 }
 
-function updateProjectiles(projectiles, troops) {
+function updateProjectiles(projectiles) {
     for (let i = 0; i < projectiles.length; i++) {
         projectile = projectiles[i]
         projectile.show()
         if (battling) {
-            if (projectile.move(troops)) {
+            if (projectile.move()) {
                 projectiles.splice(i, 1)
                 i--
             }
@@ -501,9 +541,44 @@ function eraser() {
     }
 }
 
+function mousePressed() {
+    if (!menuOpen && erasing) {
+        eraser()
+    }
+    switch (screen) {
+        case 'title':
+            titleButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'level_select':
+            levelButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'versus_lobby':
+            versusLobbyButtons.forEach(button => {
+                button.onClick()
+            })
+            break
+        case 'game':
+            if (menuOpen) {
+                menu.onClick()
+            }
+            if (mode == 'autochess') {
+                autochessEngine.onMouseDown()
+            }
+            break
+    }
+}
+
 function mouseReleased() {
     if (screen == 'game') {
         if (!panning && !menuOpen) {
+            if (mode == 'autochess') {
+                autochessEngine.onMouseRelease()
+                return
+            }
             let team
 
             if (mouseX < width / 2) {
@@ -618,30 +693,17 @@ function keyTyped() {
     }
 }
 
-function mousePressed() {
-    if (!menuOpen && erasing) {
-        eraser()
-    }
-    switch (screen) {
-        case 'title':
-            titleButtons.forEach(button => {
-                button.onClick()
-            })
-            break
-        case 'level_select':
-            levelButtons.forEach(button => {
-                button.onClick()
-            })
-            break
-        case 'versus_lobby':
-            versusLobbyButtons.forEach(button => {
-                button.onClick()
-            })
-            break
-        case 'game':
-            if (menuOpen) {
-                menu.onClick()
-            }
-            break
-    }
+function drawCoin(x, y, s, n) {
+    strokeWeight(s / 10)
+    stroke(200, 170, 20)
+    fill(255, 220, 50)
+    ellipse(x, y, s)
+    fill(200, 170, 20)
+    rectMode(CENTER)
+    noStroke()
+    rect(x, y, s / 10, s / 2, s / 40, s / 40)
+    fill(120)
+    textAlign(CENTER, CENTER)
+    textSize(s / 2)
+    text(`x${n}`, x + s / 2, y + s / 3)
 }

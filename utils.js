@@ -1,6 +1,10 @@
-function drawSettings(color, tranparency) {
+function drawSettings(color, tranparency, size) {
     // drawingContext.setLineDash([])
-    strokeWeight(width / 1000)
+    if (size) {
+        strokeWeight(size / 10)
+    } else {
+        strokeWeight(width / 1000)
+    }
     colorMode(RGB)
     switch (color) {
         case 'red':
@@ -69,38 +73,84 @@ function clearTroops(team) {
     }
 }
 
-function randomTroops(team) {
+function randomTroops(team, stage) {
     let buffer = width / 30
     let offset = width / 2
     let mult = team == 'red' ? -1 : 1
     troops = team == 'red' ? redTroops : blueTroops
+    if (stage) {
+        switch (stage) {
+            case 1:
+                for (let i = 0; i < 5; i++) {
+                    troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                break
+            case 2:
+                for (let i = 0; i < 5; i++) {
+                    troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 2; i++) {
+                    troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 5; i++) {
+                    troops.push(new Zombie(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                break
+            case 3:
+                for (let i = 0; i < 10; i++) {
+                    troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 4; i++) {
+                    troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 15; i++) {
+                    troops.push(new Zombie(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                break
+            case 4:
+                for (let i = 0; i < 10; i++) {
+                    troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 4; i++) {
+                    troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 15; i++) {
+                    troops.push(new Zombie(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 3; i++) {
+                    troops.push(new Shield(offset + mult * random(buffer / 2, buffer), random(buffer, height - buffer), team))
+                }
+                break
 
-    for (let i = 0; i < 150; i++) {
-        troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 2; i++) {
-        troops.push(new Healer(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 40; i++) {
-        troops.push(new Shield(offset + mult * random(buffer / 2, buffer), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 7; i++) {
-        troops.push(new Spear(offset + mult * random(buffer, buffer * 3 / 2), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 10; i++) {
-        troops.push(new Reaper(offset + mult * random(buffer, buffer * 2), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 30; i++) {
-        troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 2; i++) {
-        troops.push(new EWizard(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 2; i++) {
-        troops.push(new Summoner(offset + mult * random(offset - 4 * buffer, offset - 3 * buffer), random(buffer, height - buffer), team))
-    }
-    for (let i = 0; i < 1; i++) {
-        troops.push(new Necromancer(offset + mult * random(offset - 6 * buffer, offset - 4 * buffer), random(buffer, height - buffer), team))
+        }
+    } else {
+        for (let i = 0; i < 150; i++) {
+            troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 2; i++) {
+            // troops.push(new Healer(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 40; i++) {
+            troops.push(new Shield(offset + mult * random(buffer / 2, buffer), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 7; i++) {
+            troops.push(new Spear(offset + mult * random(buffer, buffer * 3 / 2), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 10; i++) {
+            troops.push(new Reaper(offset + mult * random(buffer, buffer * 2), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 30; i++) {
+            troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 2; i++) {
+            troops.push(new EWizard(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 2; i++) {
+            troops.push(new Summoner(offset + mult * random(offset - 4 * buffer, offset - 3 * buffer), random(buffer, height - buffer), team))
+        }
+        for (let i = 0; i < 1; i++) {
+            troops.push(new Necromancer(offset + mult * random(offset - 6 * buffer, offset - 4 * buffer), random(buffer, height - buffer), team))
+        }
     }
 }
 
@@ -116,7 +166,10 @@ function changeScreen(newScreen) {
             break
         case 'game':
             menu = new Menu()
-            randomSeed(1)
+            // randomSeed(1)
+            if (mode == 'autochess') {
+                autochessEngine = new AutochessEngine()
+            }
             break
     }
 
