@@ -2,6 +2,7 @@ function Zombie(x, y, team) {
     this.pos = createVector(x, y)
     this.reset = function () {
         this.name = 'zombie'
+        this.team = team
         this.vel = createVector(0, 0)
         this.size = width / 150
         this.speed = this.size / 10;
@@ -72,20 +73,9 @@ function Zombie(x, y, team) {
             this.speed += this.maxSpeed / 100
         }
 
-        this.target = foes[0]
+        updateTarget(this, foes)
 
-        let targetDist = distSquared(this.pos, this.target.pos)
-        foes.forEach(foe => {
-            if (!foe.isDead) {
-                let dist = distSquared(this.pos, foe.pos)
-                if (dist < targetDist) {
-                    this.target = foe
-                    targetDist = dist
-                }
-            }
-        })
-
-        moveUnit(this, allies.concat(foes))
+        moveUnit(this)
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();

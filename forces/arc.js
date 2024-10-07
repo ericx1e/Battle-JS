@@ -3,25 +3,47 @@ function Arc(target, team) {
 
     this.target = target
     this.nextTarget;
-    this.charges = 10
+    this.charges = 12
     this.damage = 10
-    this.range = width / 30
+    this.range = width / 25
 
     this.isDone
 
     this.hit = []
 
-    this.update = function (allies, foes) {
+    this.update = function () {
         if (this.charges <= 0) this.isDone = true
-        if (foes.length == 0) {
-            this.isDone = true
-        }
         if (this.isDone) return
-        this.nextTarget = foes[0]
-        let dist = distSquared(this.target.pos, this.nextTarget.pos)
-        for (let i = 1; i < foes.length; i++) {
-            let foe = foes[i]
-            if (!foe.isDead && !this.hit.includes(foe) && foe != this.target) {
+
+        // this.nextTarget = foes[0]
+        // let dist = distSquared(this.target.pos, this.nextTarget.pos)
+        // for (let i = 1; i < foes.length; i++) {
+        //     let foe = foes[i]
+        //     if (!foe.isDead && !this.hit.includes(foe) && foe != this.target) {
+        //         let curDist = distSquared(this.target.pos, foe.pos)
+        //         if (curDist < dist) {
+        //             if (random(0, 1) > 0.25) {
+        //                 this.nextTarget = foe
+        //                 dist = curDist
+        //             }
+        //         }
+        //     }
+        // }
+
+        let targetTeam = team == 'blue' ? 'red' : 'blue'
+        collided = checkCollision(this.target.pos, this.range, targetTeam)
+        if (!collided.length) {
+            this.isDone = true
+            return
+        }
+
+        // this.nextTarget = collided[floor(random(0, collided.length))]
+
+        this.nextTarget = collided[0]
+        let dist = width // big number
+        for (let i = 1; i < collided.length; i++) {
+            let foe = collided[i]
+            if (!this.hit.includes(foe) && foe != this.target) {
                 let curDist = distSquared(this.target.pos, foe.pos)
                 if (curDist < dist) {
                     if (random(0, 1) > 0.25) {
@@ -30,6 +52,11 @@ function Arc(target, team) {
                     }
                 }
             }
+        }
+
+        if (this.hit.includes(this.nextTarget)) {
+            this.isDone = true
+            return
         }
 
         this.target.speed = 0
@@ -41,10 +68,10 @@ function Arc(target, team) {
             this.charges--
         }
 
-        if (!this.nextTarget || distSquared(this.target.pos, this.nextTarget.pos) > sqr(this.range)) {
-            this.isDone = true
-            return
-        }
+        // if (!this.nextTarget || distSquared(this.target.pos, this.nextTarget.pos) > sqr(this.range)) {
+        //     this.isDone = true
+        //     return
+        // }
 
         let drawVec = p5.Vector.sub(this.nextTarget.pos, this.target.pos)
         let randMag = drawVec.mag() / 10

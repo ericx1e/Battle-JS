@@ -2,13 +2,14 @@ function Shield(x, y, team) {
     this.pos = createVector(x, y)
     this.reset = function () {
         this.name = 'shield'
+        this.team = team
         this.cost = 30
         this.vel = createVector(0, 0)
-        this.size = width / 80
+        this.size = width / 60
         this.speed = this.size / 30;
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 300
+        this.maxHitpoints = 400
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
         this.attackPower = 3
@@ -16,7 +17,7 @@ function Shield(x, y, team) {
         this.attackRange = this.size * 1.5
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
-        this.armor = 2 // reduces all damage taken
+        this.armor = 2 // reduces all damage taken TODO: implement this lol
 
         this.takingDamageFrames = 0 //animation for getting hit
 
@@ -75,24 +76,12 @@ function Shield(x, y, team) {
             this.speed += this.maxSpeed / 100
         }
 
-        this.target = foes[0]
+        updateTarget(this, foes)
 
-        let targetDist = distSquared(this.pos, this.target.pos)
-        foes.forEach(foe => {
-            if (!foe.isDead) {
-                let dist = distSquared(this.pos, foe.pos)
-                if (dist < targetDist) {
-                    this.target = foe
-                    targetDist = dist
-                }
-            }
-        })
-        let others = allies.concat(foes)
-
-        moveUnit(this, others)
+        moveUnit(this)
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
-                this.attack(others);
+                this.attack();
             }
             // this.checkCollision(allies.concat(foes))
         }
@@ -105,9 +94,9 @@ function Shield(x, y, team) {
     }
 
 
-    this.attack = function (others) {
+    this.attack = function () {
         takeDamage(this.target, this.attackPower)
-        knockbackUnit(this.target, others)
+        knockbackUnit(this.target)
 
         // let moveVector = p5.Vector.sub(this.target.pos, this.pos).setMag(this.target.speed * 2)
         // this.target.pos.add(moveVector)

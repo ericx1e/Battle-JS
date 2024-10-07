@@ -2,6 +2,7 @@ function Summoner(x, y, team) {
     this.pos = createVector(x, y)
     this.reset = function () {
         this.name = 'summoner'
+        this.team = team
         this.cost = 80
         this.allies = team == 'red' ? redTroops : blueTroops
 
@@ -82,22 +83,11 @@ function Summoner(x, y, team) {
             this.speed += this.maxSpeed / 100
         }
 
-        this.target = foes[0]
-
-        let targetDist = distSquared(this.pos, this.target.pos)
-        foes.forEach(foe => {
-            if (!foe.isDead) {
-                let dist = distSquared(this.pos, foe.pos)
-                if (dist < targetDist) {
-                    this.target = foe
-                    targetDist = dist
-                }
-            }
-        })
+        updateTarget(this, foes)
 
         let removed = 0
 
-        moveUnit(this, allies.concat(foes))
+        moveUnit(this)
         if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
             removed = this.attack();
         }

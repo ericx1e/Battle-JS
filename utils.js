@@ -85,13 +85,50 @@ function randomTroops(team, stage) {
                     troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
                 }
                 break
+            case 2:
+                for (let i = 0; i < 5; i++) {
+                    troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 2; i++) {
+                    troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 5; i++) {
+                    troops.push(new Zombie(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                break
+            case 3:
+                for (let i = 0; i < 10; i++) {
+                    troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 4; i++) {
+                    troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 15; i++) {
+                    troops.push(new Zombie(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                break
+            case 4:
+                for (let i = 0; i < 10; i++) {
+                    troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 4; i++) {
+                    troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 15; i++) {
+                    troops.push(new Zombie(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+                }
+                for (let i = 0; i < 3; i++) {
+                    troops.push(new Shield(offset + mult * random(buffer / 2, buffer), random(buffer, height - buffer), team))
+                }
+                break
+
         }
     } else {
         for (let i = 0; i < 150; i++) {
             troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
         }
         for (let i = 0; i < 2; i++) {
-            troops.push(new Healer(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+            // troops.push(new Healer(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
         }
         for (let i = 0; i < 40; i++) {
             troops.push(new Shield(offset + mult * random(buffer / 2, buffer), random(buffer, height - buffer), team))

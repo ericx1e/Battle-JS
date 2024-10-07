@@ -6,6 +6,8 @@ function AutochessEngine() {
 
     this.status = 'preparing'
 
+    this.buffs = []
+
     let selectedTroop = undefined
     const shopLength = 5
     let shopWidth = width * 2 / 4
@@ -19,7 +21,9 @@ function AutochessEngine() {
     let shopStageMap = {
         1: ['shop_soldier', 'shop_soldier', 'shop_archer'],
         2: ['shop_soldier', 'shop_soldier', 'shop_soldier', 'shop_archer', 'shop_archer', 'shop_zombie'],
-        3: ['shop_soldier', 'shop_soldier', 'shop_archer', 'shop_archer'],
+        3: ['shop_soldier', 'shop_soldier', 'shop_archer', 'shop_archer', 'shop_zombie', 'shop_soldier_health'],
+        4: ['shop_soldier', 'shop_archer', 'shop_archer', 'shop_zombie', 'shop_shield', 'shop_soldier_health', 'shop_archer_spread'],
+        5: ['shop_soldier', 'shop_archer', 'shop_archer', 'shop_zombie', 'shop_shield', 'shop_soldier_health', 'shop_archer_spread'],
     }
 
     this.savedTroops = []
@@ -32,7 +36,12 @@ function AutochessEngine() {
     this.generateShop = function () {
         let availableShop = shopStageMap[this.stage]
         for (let i = 0; i < shopLength; i++) {
-            this.shopButtons[i] = new Button(shopX - shopLength / 2 * shopButtonOffset + shopButtonOffset * i, shopY, shopButtonSize, shopButtonSize, availableShop[parseInt(random(0, availableShop.length))])
+            let randId = availableShop[parseInt(random(0, availableShop.length))]
+            // console.log(randId.substring(5))
+            while (this.buffs.includes(randId.substring(5))) {
+                randId = availableShop[parseInt(random(0, availableShop.length))]
+            }
+            this.shopButtons[i] = new Button(shopX - shopLength / 2 * shopButtonOffset + shopButtonOffset * i, shopY, shopButtonSize, shopButtonSize, randId)
         }
     }
 
@@ -72,10 +81,11 @@ function AutochessEngine() {
     }
 
     this.endRound = function () {
+        console.log('help')
         this.status = 'preparing'
         this.loadTroops()
         this.generateShop()
-        this.gold += 10
+        this.gold += 10 + this.stage
         this.stage++
     }
 

@@ -53,10 +53,25 @@ function Button(x, y, w, h, id) {
             this.model.size *= 2
             this.shopCost = 3
             break
+        case 'shop_shield':
+            this.model = new Shield(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 2
+            break
         case 'shop_zombie':
             this.model = new Zombie(modelX, modelY, modelTeam)
             this.model.size *= 2
             this.shopCost = 3
+            break
+        case 'shop_soldier_health':
+            this.model = new Soldier(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 4
+            break
+        case 'shop_archer_spread':
+            this.model = new Archer(modelX, modelY, modelTeam)
+            this.model.size *= 2
+            this.shopCost = 5
             break
     }
 
@@ -79,6 +94,25 @@ function Button(x, y, w, h, id) {
             }
             rect(this.x, this.y, this.w, this.h, this.h / 5, this.h / 5)
             this.model.show()
+
+            if (mode == 'autochess') {
+                switch (id) {
+                    case 'shop_soldier_health':
+                        noStroke()
+                        fill(50, 230, 50)
+                        textSize(this.w / 2)
+                        textAlign(CENTER, CENTER)
+                        text('+', this.x + this.model.size / 2, this.y - this.model.size / 2)
+                        break
+                    case 'shop_archer_spread':
+                        noStroke()
+                        fill(50, 230, 50)
+                        textSize(this.w / 4)
+                        textAlign(CENTER, CENTER)
+                        text('x3', this.x + this.model.size, this.y - this.model.size)
+                        break
+                }
+            }
 
             if (this.shopCost) {
                 drawCoin(x + w / 2 - coinS, y + h / 2 - coinS, coinS, this.shopCost)
@@ -309,10 +343,22 @@ function Button(x, y, w, h, id) {
                                 redTroops.push(new Archer(width / 4 + random(-1, 1), height / 2 + random(-1, 1), 'red'))
                                 autochessEngine.gold -= this.shopCost
                                 break
+                            case 'shop_shield':
+                                redTroops.push(new Shield(width / 4 + random(-1, 1), height / 2 + random(-1, 1), 'red'))
+                                autochessEngine.gold -= this.shopCost
+                                break
                             case 'shop_zombie':
                                 for (let i = 0; i < 6; i++) {
                                     redTroops.push(new Zombie(width / 4 + random(-1, 1), height / 2 + random(-1, 1), 'red'))
                                 }
+                                autochessEngine.gold -= this.shopCost
+                                break
+                            case 'shop_soldier_health':
+                                autochessEngine.buffs.push('soldier_health')
+                                autochessEngine.gold -= this.shopCost
+                                break
+                            case 'shop_archer_spread':
+                                autochessEngine.buffs.push('archer_spread')
                                 autochessEngine.gold -= this.shopCost
                                 break
                         }

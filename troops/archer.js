@@ -2,6 +2,7 @@ function Archer(x, y, team) {
     this.pos = createVector(x, y)
     this.reset = function () {
         this.name = 'archer'
+        this.team = team
         this.cost = 20
         this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
@@ -76,20 +77,9 @@ function Archer(x, y, team) {
             this.speed += this.maxSpeed / 100
         }
 
-        this.target = foes[0]
+        updateTarget(this, foes)
 
-        let targetDist = distSquared(this.pos, this.target.pos)
-        foes.forEach(foe => {
-            if (!foe.isDead) {
-                let dist = distSquared(this.pos, foe.pos)
-                if (dist < targetDist) {
-                    this.target = foe
-                    targetDist = dist
-                }
-            }
-        })
-
-        moveUnit(this, allies.concat(foes))
+        moveUnit(this)
         if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
@@ -107,5 +97,12 @@ function Archer(x, y, team) {
 
     this.attack = function () {
         this.projectiles.push(new Arrow(this.pos, this.target.pos, team))
+        if (mode == 'autochess') {
+            if (autochessEngine && autochessEngine.buffs.includes('archer_spread') && team == 'red') {
+                for (let i = 0; i < 2; i++) {
+                    this.projectiles.push(new Arrow(this.pos, this.target.pos, team))
+                }
+            }
+        }
     }
 }

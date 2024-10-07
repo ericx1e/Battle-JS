@@ -2,6 +2,8 @@ p5.disableFriendlyErrors = true;
 
 let screen = 'title'
 let mode
+let spacialGrid = []
+let cellSize
 
 let battleFrameCount = 0
 let redTroops = []
@@ -53,6 +55,8 @@ let canvasWidth
 let canvasHeight
 
 function setup() {
+    cellSize = width / 5
+
     // frameRate(10)
     textFont(font)
     canvasWidth = window.innerWidth * 5 / 6
@@ -221,6 +225,7 @@ function gameLoop() {
     //     }
     // }
 
+    allUnits = []
     while (blueTroops[bi] || redTroops[ri]) {
         let blueTroop = blueTroops[bi]
         let redTroop = redTroops[ri]
@@ -229,6 +234,7 @@ function gameLoop() {
             if (blueTroop.name == 'necromancer') {
                 blueHasNecro = true
             }
+            allUnits.push(blueTroop)
             blueTroop.show()
             if (battling) {
                 let removed = blueTroop.update(blueTroops, redTroops)
@@ -250,6 +256,7 @@ function gameLoop() {
             if (redTroop.name == 'necromancer') {
                 redHasNecro = true
             }
+            allUnits.push(redTroop)
             redTroop.show()
             if (battling) {
                 let removed = redTroop.update(redTroops, blueTroops)
@@ -270,6 +277,8 @@ function gameLoop() {
             }
             ri++;
         }
+
+        updateGrid(allUnits)
     }
 
     if (shared && shared.redTroops && shared.blueTroops) {
@@ -302,10 +311,10 @@ function gameLoop() {
         }
     }
 
-
+    // TODO: combine forces into one list
     for (let i = 0; i < blueForces.length; i++) {
         let force = blueForces[i]
-        force.update(blueTroops, redTroops)
+        force.update()
         if (force.isDone) {
             blueForces.splice(i, 1)
         }
@@ -313,7 +322,7 @@ function gameLoop() {
 
     for (let i = 0; i < redForces.length; i++) {
         let force = redForces[i]
-        force.update(redTroops, blueTroops)
+        force.update()
         if (force.isDone) {
             redForces.splice(i, 1)
         }
@@ -352,8 +361,8 @@ function gameLoop() {
         redToRemove.splice(i, 1)
     }
 
-    updateProjectiles(blueProjectiles, redTroops)
-    updateProjectiles(redProjectiles, blueTroops)
+    updateProjectiles(blueProjectiles)
+    updateProjectiles(redProjectiles)
 
     /*
     noStroke()
@@ -472,18 +481,18 @@ function gameLoop() {
         currentLevel.update()
     }
 
-    if (keyIsPressed && keyCode == SHIFT && mouseIsPressed && battleFrameCount % 5 == 0) {
+    if (keyIsPressed && keyCode == SHIFT && mouseIsPressed) {
         mouseReleased()
     }
 
 }
 
-function updateProjectiles(projectiles, troops) {
+function updateProjectiles(projectiles) {
     for (let i = 0; i < projectiles.length; i++) {
         projectile = projectiles[i]
         projectile.show()
         if (battling) {
-            if (projectile.move(troops)) {
+            if (projectile.move()) {
                 projectiles.splice(i, 1)
                 i--
             }

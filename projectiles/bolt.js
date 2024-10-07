@@ -22,26 +22,20 @@ function Bolt(start, target, team) {
         endShape()
     }
 
-    this.move = function (targets) {
+    this.move = function () {
         this.pos.add(this.vel)
-
-        for (let i = 0; i < targets.length; i++) {
-            other = targets[i];
-            if (other == this || other.isDead) {
-                continue
+        let targetTeam = team == 'blue' ? 'red' : 'blue'
+        let collided = checkCollision(this.pos, this.size / 2, targetTeam)
+        if (collided.length) {
+            let other = collided[0]
+            takeDamage(other, this.damage)
+            for (let i = 0; i < 5; i++) {
+                this.forces.push(new Arc(other, team))
             }
-
-            if (distSquared(this.pos, other.pos) < sqr(this.size / 2 + other.size)) {
-                takeDamage(other, this.damage)
-                for (let i = 0; i < 5; i++) {
-                    this.forces.push(new Arc(other, team))
-                }
-                return true
-            }
-
-            if (this.pos.x + this.size < 0 || this.pos.x + this.size > width || this.pos.y + this.size < 0 || this.pos.y + this.size > height) {
-                return true
-            }
+            return true
+        }
+        if (this.pos.x - this.size < 0 || this.pos.x + this.size > width || this.pos.y - this.size < 0 || this.pos.y + this.size > height) {
+            return true
         }
     }
 }
