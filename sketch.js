@@ -15,6 +15,8 @@ let blueToRemove = []
 let blueProjectiles = []
 let blueForces = []
 
+let walls = []
+
 let newTroop
 let newTroopId
 let newTroopGhost
@@ -55,14 +57,13 @@ let canvasWidth
 let canvasHeight
 
 function setup() {
-    cellSize = width / 5
-
     // frameRate(10)
     textFont(font)
     canvasWidth = window.innerWidth * 5 / 6
     // canvasHeight = window.innerHeight * 3 / 4
     canvasHeight = canvasWidth / 16 * 9
     canvas = createCanvas(canvasWidth, canvasHeight)
+    cellSize = width / 20
     canvas.position((window.innerWidth - canvasWidth) / 2, (window.innerHeight - canvasHeight) / 2)
     zoom = (height / 2) / tan(PI / 6)
 
@@ -82,6 +83,9 @@ function setup() {
 
     let versusButtonSize = width / 13
     versusLobbyButtons = [new Button(versusButtonSize * 1.25, width / 40 + versusButtonSize / 4, versusButtonSize, versusButtonSize / 2, 'return_to_title'), new Button(width / 2, height * 4 / 5, versusButtonSize * 2, versusButtonSize, 'versus_join')]
+
+
+    // walls = [new Wall(width / 2, 0, 300), new Wall(width / 2, height, 300)]
 }
 
 function draw() {
@@ -204,6 +208,12 @@ function gameLoop() {
     noFill()
     rectMode(CENTER)
     rect(width / 2, height / 2, width, height)
+    drawSettings('red')
+    noStroke()
+    text(redTroops.length, width / 8, height / 2)
+    drawSettings('blue')
+    noStroke()
+    text(blueTroops.length, width * 7 / 8, height / 2)
 
     let bi = 0;
     let ri = 0;
@@ -245,6 +255,11 @@ function gameLoop() {
                     } else {
                         blueToRemove.push(blueTroop)
                     }
+                } else {
+                    if (bi == battleFrameCount % blueTroops.length) {
+                        updateToClosestTarget(blueTroop, redTroops) // improves targeting can possibly remove
+                        // ellipse(blueTroop.pos.x, blueTroop.pos.y, 50, 50)
+                    }
                 }
                 if (blueTroop.name == 'necromancer' && removed) {
                     bi -= removed
@@ -266,6 +281,10 @@ function gameLoop() {
                     } else {
                         redToRemove.push(redTroop)
                     }
+                } else {
+                    if (ri == battleFrameCount % redTroops.length) {
+                        updateToClosestTarget(redTroop, blueTroops)
+                    }
                 }
                 if (redTroop.name == 'necromancer' && removed) {
                     ri -= removed
@@ -277,9 +296,9 @@ function gameLoop() {
             }
             ri++;
         }
-
-        updateGrid(allUnits)
     }
+
+    updateGrid(allUnits)
 
     if (shared && shared.redTroops && shared.blueTroops) {
         if (partyIsHost()) {
@@ -363,6 +382,11 @@ function gameLoop() {
 
     updateProjectiles(blueProjectiles)
     updateProjectiles(redProjectiles)
+
+    walls.forEach(wall => {
+        wall.show()
+        wall.update()
+    });
 
     /*
     noStroke()

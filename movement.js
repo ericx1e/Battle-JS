@@ -6,6 +6,11 @@ function setupGrid() {
         spacialGrid[i] = new Array(rows);
         for (let j = 0; j < rows; j++) {
             spacialGrid[i][j] = [];
+            // noFill()
+            // stroke(0)
+            // strokeWeight(2)
+            // rectMode(CORNER)
+            // rect(i * cellSize, j * cellSize, cellSize, cellSize)
         }
     }
 }
@@ -42,6 +47,9 @@ function moveUnit(unit) {
 }
 
 function knockbackUnit(unit) {
+    if (unit.name == 'shield') {
+        return
+    }
     // let moveVector = p5.Vector.sub(foe.pos, this.pos).setMag(foe.speed * 2)
     // foe.pos.add(moveVector)
     unit.pos.add(p5.Vector.mult(unit.vel, -2))
@@ -58,12 +66,12 @@ function moveUnitTowards(unit, dest) {
     checkBoundaries(unit)
 }
 
-function checkCollision(sourcePos, radius, targetTeam) {
+function checkTeamCollision(sourcePos, radius, targetTeam) {
     // Calculate the grid bounds (min and max rows and columns) to check based on the radius
-    let minCol = floor((sourcePos.x - radius) / cellSize) - 1;
-    let maxCol = floor((sourcePos.x + radius) / cellSize) + 1;
-    let minRow = floor((sourcePos.y - radius) / cellSize) - 1;
-    let maxRow = floor((sourcePos.y + radius) / cellSize) + 1;
+    let minCol = floor((sourcePos.x - radius) / cellSize);
+    let maxCol = floor((sourcePos.x + radius) / cellSize);
+    let minRow = floor((sourcePos.y - radius) / cellSize);
+    let maxRow = floor((sourcePos.y + radius) / cellSize);
 
     // Ensure bounds are within the grid limits
     minCol = max(minCol, 0);
@@ -82,6 +90,48 @@ function checkCollision(sourcePos, radius, targetTeam) {
                 let other = cellUnits[i];
 
                 if (other.team != targetTeam || other.isDead) continue;
+
+                // Calculate the actual distance squared between the source and the other unit
+                let distanceSquared = distSquared(sourcePos, other.pos);
+                let collisionDist = sqr(radius + other.size / 2);  // sum of radii for the collision
+
+                // If distance between source and other is within collision radius
+                if (distanceSquared <= collisionDist) {
+                    collided.push(other)
+                }
+            }
+        }
+    }
+
+    // No collision found
+    return collided;
+}
+
+
+function checkCollision(sourcePos, radius) {
+    // Calculate the grid bounds (min and max rows and columns) to check based on the radius
+    let minCol = floor((sourcePos.x - radius) / cellSize);
+    let maxCol = floor((sourcePos.x + radius) / cellSize);
+    let minRow = floor((sourcePos.y - radius) / cellSize);
+    let maxRow = floor((sourcePos.y + radius) / cellSize);
+
+    // Ensure bounds are within the grid limits
+    minCol = max(minCol, 0);
+    maxCol = min(maxCol, spacialGrid.length - 1);
+    minRow = max(minRow, 0);
+    maxRow = min(maxRow, spacialGrid[0].length - 1);
+
+    // Loop through relevant grid cells within the radius
+    collided = []
+    for (let col = minCol; col <= maxCol; col++) {
+        for (let row = minRow; row <= maxRow; row++) {
+            let cellUnits = spacialGrid[col][row];
+
+            // Check each unit in the current grid cell
+            for (let i = 0; i < cellUnits.length; i++) {
+                let other = cellUnits[i];
+
+                if (other.isDead) continue;
 
                 // Calculate the actual distance squared between the source and the other unit
                 let distanceSquared = distSquared(sourcePos, other.pos);
@@ -121,7 +171,7 @@ function checkUnitCollision(unit) {
                     if (distSquared(unit.pos, other.pos) < sqr(minDist)) {
                         let moveVector = p5.Vector.sub(unit.pos, other.pos).limit(unit.maxSpeed * 0.75);
                         squeezeVel.add(moveVector);
-                        if (!(unit.name == 'zombie' && other.name == 'summoner')) {
+                        if (!(unit.name == 'zombie' && other.name == 'summoner') && !(other.name == 'shield' && unit.name != 'shield')) {
                             other.pos.sub(moveVector);
                         }
                     }

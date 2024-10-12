@@ -1,5 +1,11 @@
 function updateTarget(unit, foes) { // TODO: integrate spacial grid ?
     if (unit.target == unit || unit.target.isDead) {
+        updateToClosestTarget(unit, foes)
+    }
+}
+
+function updateToClosestTarget(unit, foes) {
+    if (foes.length) {
         unit.target = foes[0]
         let targetDist = distSquared(unit.pos, unit.target.pos)
         foes.forEach(foe => {
@@ -11,5 +17,7 @@ function updateTarget(unit, foes) { // TODO: integrate spacial grid ?
                 }
             }
         })
+    } else {
+        unit.target = unit
     }
 }

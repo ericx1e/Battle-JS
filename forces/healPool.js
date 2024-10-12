@@ -20,7 +20,7 @@ function HealPool(x, y, range, team) {
 
         if (this.isDone) return
 
-        collided = checkCollision(this.pos, this.range, team)
+        collided = checkTeamCollision(this.pos, this.range, team)
 
         collided.forEach(ally => {
             if (ally.id == 'healer') {

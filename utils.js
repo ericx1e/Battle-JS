@@ -124,7 +124,7 @@ function randomTroops(team, stage) {
 
         }
     } else {
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < 200; i++) {
             troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
         }
         for (let i = 0; i < 2; i++) {
@@ -139,7 +139,7 @@ function randomTroops(team, stage) {
         for (let i = 0; i < 10; i++) {
             troops.push(new Reaper(offset + mult * random(buffer, buffer * 2), random(buffer, height - buffer), team))
         }
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 25; i++) {
             troops.push(new Archer(offset + mult * random(offset - 3 * buffer, offset - buffer), random(buffer, height - buffer), team))
         }
         for (let i = 0; i < 2; i++) {

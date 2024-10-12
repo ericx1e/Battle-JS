@@ -66,7 +66,7 @@ function ThrownSpear(start, target, team) {
         }
 
         let targetTeam = team == 'blue' ? 'red' : 'blue'
-        let collided = checkCollision(this.pos, this.size / 2, targetTeam)
+        let collided = checkTeamCollision(this.pos, this.size / 2, targetTeam)
         if (collided.length) {
             other = collided[0]
             if (!this.hit.includes(other) && distSquared(this.pos, other.pos) < sqr(this.size / 2 + other.size)) {

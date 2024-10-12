@@ -20,7 +20,7 @@ function ReaperSweep(unit, range, damage, team) {
 
         if (this.frames == this.totalFrames) {
             let targetTeam = team == 'blue' ? 'red' : 'blue'
-            collided = checkCollision(this.pos, this.range, targetTeam)
+            collided = checkTeamCollision(this.pos, this.range, targetTeam)
             collided.forEach(foe => {
                 takeDamage(foe, this.damage)
                 if (foe.hitpoints <= 0) {

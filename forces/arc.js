@@ -31,7 +31,7 @@ function Arc(target, team) {
         // }
 
         let targetTeam = team == 'blue' ? 'red' : 'blue'
-        collided = checkCollision(this.target.pos, this.range, targetTeam)
+        collided = checkTeamCollision(this.target.pos, this.range, targetTeam)
         if (!collided.length) {
             this.isDone = true
             return

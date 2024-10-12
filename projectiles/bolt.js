@@ -25,7 +25,7 @@ function Bolt(start, target, team) {
     this.move = function () {
         this.pos.add(this.vel)
         let targetTeam = team == 'blue' ? 'red' : 'blue'
-        let collided = checkCollision(this.pos, this.size / 2, targetTeam)
+        let collided = checkTeamCollision(this.pos, this.size / 2, targetTeam)
         if (collided.length) {
             let other = collided[0]
             takeDamage(other, this.damage)
