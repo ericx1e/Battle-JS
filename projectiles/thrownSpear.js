@@ -72,7 +72,6 @@ function ThrownSpear(start, target, team) {
             if (!this.hit.includes(other) && distSquared(this.pos, other.pos) < sqr(this.size / 2 + other.size)) {
                 takeDamage(other, this.damage)
                 this.hit.push(other)
-                other.pos.add(this.vel)
                 other.speed = 0
                 // knockbackUnit(other, targets)
                 this.vel.mult(0.9)

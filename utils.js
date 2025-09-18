@@ -127,6 +127,9 @@ function randomTroops(team, stage) {
         for (let i = 0; i < 200; i++) {
             troops.push(new Soldier(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
         }
+        for (let i = 0; i < 5; i++) {
+            troops.push(new CastleWall(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
+        }
         for (let i = 0; i < 2; i++) {
             // troops.push(new Healer(offset + mult * random(buffer, offset - buffer), random(buffer, height - buffer), team))
         }

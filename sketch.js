@@ -64,6 +64,9 @@ function setup() {
     canvasHeight = canvasWidth / 16 * 9
     canvas = createCanvas(canvasWidth, canvasHeight)
     cellSize = width / 20
+
+    setupGrid();
+
     canvas.position((window.innerWidth - canvasWidth) / 2, (window.innerHeight - canvasHeight) / 2)
     zoom = (height / 2) / tan(PI / 6)
 
@@ -86,6 +89,9 @@ function setup() {
 
 
     // walls = [new Wall(width / 2, 0, 300), new Wall(width / 2, height, 300)]
+    // for (let i = 0; i < 150; i++) {
+    //     walls.push(new Wall(random(0, width), random(0, height), 20))
+    // }
 }
 
 function draw() {
@@ -185,6 +191,10 @@ function versusLoadingLoop() {
 
 function gameLoop() {
     background(51)
+
+    const allUnitsNow = redTroops.concat(blueTroops);
+    updateGrid(allUnitsNow);
+
     if (battling) {
         battleFrameCount++
         if (shared) {
@@ -235,7 +245,6 @@ function gameLoop() {
     //     }
     // }
 
-    allUnits = []
     while (blueTroops[bi] || redTroops[ri]) {
         let blueTroop = blueTroops[bi]
         let redTroop = redTroops[ri]
@@ -244,7 +253,7 @@ function gameLoop() {
             if (blueTroop.name == 'necromancer') {
                 blueHasNecro = true
             }
-            allUnits.push(blueTroop)
+
             blueTroop.show()
             if (battling) {
                 let removed = blueTroop.update(blueTroops, redTroops)
@@ -271,7 +280,7 @@ function gameLoop() {
             if (redTroop.name == 'necromancer') {
                 redHasNecro = true
             }
-            allUnits.push(redTroop)
+
             redTroop.show()
             if (battling) {
                 let removed = redTroop.update(redTroops, blueTroops)
@@ -297,8 +306,6 @@ function gameLoop() {
             ri++;
         }
     }
-
-    updateGrid(allUnits)
 
     if (shared && shared.redTroops && shared.blueTroops) {
         if (partyIsHost()) {
@@ -388,23 +395,21 @@ function gameLoop() {
         wall.update()
     });
 
-    /*
     noStroke()
     fill(255)
     text('fps: ' + Math.floor(frameRate()), 50, 50)
-    */
 
     if (mode == 'campaign' && currentLevel) {
         noStroke()
         fill(70, 200, 70)
-        textAlign(CORNER)
+        textAlign(LEFT, TOP)
         text('$' + currentLevel.money, width / 20, width / 20)
     }
 
     if (mode == 'autochess') {
         noStroke()
         fill(70, 200, 70)
-        textAlign(CORNER)
+        textAlign(LEFT, TOP)
         // text('$' + currentLevel.money, width / 20, width / 20)
         if (autochessEngine) {
             autochessEngine.update()
@@ -425,7 +430,8 @@ function gameLoop() {
             fill(255)
             noStroke()
             textSize(width / 50)
-            textAlign(CORNER, CORNER)
+            // textAlign(CORNER, CORNER)
+            textAlign(LEFT, TOP)
             // text("\t<<\tclick the left edge to open menu", 0, width / 10)
             stroke(255)
             strokeWeight(this.size / 5)
@@ -668,6 +674,9 @@ function mouseReleased() {
             }
 
             panning = false
+        }
+        if (key == 'w') {
+            walls.push(new Wall(mouseX, mouseY, 100))
         }
     }
 }
