@@ -168,6 +168,18 @@ function Button(x, y, w, h, id) {
                     textSize(this.h / 4)
                     text('Autochess', this.x, this.y)
                     break
+                case 'title_siege':
+                    if (this.isTouchingMouse()) {
+                        fill(185)
+                    } else {
+                        fill(210)
+                    }
+                    rect(this.x, this.y, this.w, this.h, this.h / 5)
+                    fill(0)
+                    textAlign(CENTER, CENTER)
+                    textSize(this.h / 4)
+                    text('Siege', this.x, this.y)
+                    break
                 case 'title_campaign':
                     if (this.isTouchingMouse()) {
                         fill(185)
@@ -385,6 +397,10 @@ function Button(x, y, w, h, id) {
                         break
                     case 'title_sandbox':
                         mode = 'sandbox'
+                        changeScreen('game')
+                        break
+                    case 'title_siege':
+                        mode = 'siege'
                         changeScreen('game')
                         break
                     case 'title_versus':

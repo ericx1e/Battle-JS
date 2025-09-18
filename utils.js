@@ -173,6 +173,9 @@ function changeScreen(newScreen) {
             if (mode == 'autochess') {
                 autochessEngine = new AutochessEngine()
             }
+            if (mode == 'siege') {
+                initSiege()
+            }
             break
     }
 

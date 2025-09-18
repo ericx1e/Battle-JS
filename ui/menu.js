@@ -22,6 +22,8 @@ function Menu() {
         utilButtonIds = ['erase', 'restart']
     } else if (mode == 'autochess') {
         utilButtonIds = []
+    } else if (mode == 'siege') {
+        utilButtonIds = []
     }
     this.buttons = []
 

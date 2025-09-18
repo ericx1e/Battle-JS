@@ -73,7 +73,7 @@ function setup() {
     eraseSize = width / 40
 
     let buttonSize = width / 14
-    titleButtons = [new Button(width / 2 - 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2 - 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_autochess'), new Button(width / 2 + 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus')]
+    titleButtons = [new Button(width / 2 - 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2 - 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_autochess'), new Button(width / 2 + 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus'), new Button(width - buttonSize * 1.5, height - buttonSize * 0.75, buttonSize, buttonSize / 2, 'title_siege')]
 
     let levelButtonSize = width / 13
     let levelButtonsPerRow = 8
@@ -365,6 +365,13 @@ function gameLoop() {
         if (blueHasNecro && toRemove.name != 'zombie' && toRemove.name != 'necromancer') {
             continue
         }
+
+        if (mode === 'siege' && toRemove.name !== 'zombie') {
+            const base = 1 + floor(random(0, 4));
+            const waveBonus = floor(siege.wave * 0.4); // scales a bit with wave
+            dropGold(toRemove.pos.x, toRemove.pos.y, base + waveBonus);
+        }
+
         blueTroops.splice(index, 1)
         i--
         blueToRemove.splice(i, 1)
@@ -415,6 +422,13 @@ function gameLoop() {
             autochessEngine.update()
             autochessEngine.showUI()
         }
+    }
+
+    if (mode == 'siege') {
+        updateSiege();
+        updateCoins();
+        drawCoins();
+        drawSiegeHUD();
     }
 
     /*
@@ -618,7 +632,7 @@ function mouseReleased() {
                 }
             } else {
                 team = 'blue'
-                if (mode == 'campaign') {
+                if (mode == 'campaign' || mode == 'siege') {
                     return
                 }
                 if (shared && partyIsHost()) {
@@ -667,6 +681,11 @@ function mouseReleased() {
                     }
                 } else if (mode == 'sandbox') {
                     team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
+                } else if (mode == 'siege') {
+                    if (team == 'red' && siege.gold >= newTroop.cost) {
+                        redTroops.push(newTroop)
+                        siege.gold -= newTroop.cost
+                    }
                 }
                 if (shared) {
                     team == 'red' ? shared.redTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, w: width, h: height }) : shared.blueTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, w: width, h: height })
