@@ -55,15 +55,17 @@ function Zombie(x, y, team) {
     this.update = function (allies, foes) {
         if (this.isDead) return
 
-        if (foes.length == 0) {
-            this.target = this
-            return
-        }
         if (battleFrameCount - this.spawnFrame < this.maxHitpoints * 4 - 1) {
             if (this.hitpoints <= 0) {
                 this.isDead = true
             }
             this.hitpoints += 0.25
+            updateTarget(this, foes)
+            return
+        }
+
+        if (foes.length == 0) {
+            this.target = this
             return
         }
 

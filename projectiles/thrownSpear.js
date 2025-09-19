@@ -79,6 +79,9 @@ function ThrownSpear(start, target, team) {
                 // let moveVector = p5.Vector.sub(other.pos, this.pos).setMag(other.speed * 2)
                 // other.pos.add(moveVector)
                 // other.speed = -other.maxSpeed
+                if (other.name == 'castlewall') {
+                    return true
+                }
             }
         }
         if (this.pos.x - this.size < 0 || this.pos.x + this.size > width || this.pos.y - this.size < 0 || this.pos.y + this.size > height) {

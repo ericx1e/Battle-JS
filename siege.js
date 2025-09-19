@@ -91,7 +91,6 @@ function spawnBlue(kind, x, y, wave) {
         case 'necromancer': u = new Necromancer(x, y, 'blue'); break;
     }
     if (!u) return null;
-    u.firstAttackFrame = 0;
     applyWaveScaling(u, wave);
     blueTroops.push(u);
 
@@ -108,8 +107,14 @@ function spawnWave(wave) {
     const laneH = height / lanes;
     const edgeX = width + 20;
 
+    // --- SURGE LOGIC: every 5th wave or 22% chance after wave 3
+    const isSurge = (wave > 0 && (wave % 5 === 0 || (wave >= 3 && random() < 0.22)));
+    const surgeMul = isSurge ? 1.35 : 1.0; // multiplicative bump for counts
+
     // how many squads (packets) to send this wave
-    const squads = clamp(2 + Math.floor(wave / 2), 2, 7);
+    let squadsBase = 2 + Math.floor(wave / 2);
+    if (isSurge) squadsBase += 1; // a little extra pressure on surges
+    const squads = clamp(Math.floor(squadsBase), 2, 9);
 
     // one necromancer max per wave (from wave 6+)
     let necroSpawned = false;
@@ -125,55 +130,89 @@ function spawnWave(wave) {
         const baseY = laneH * (lane + 0.5) + random(-laneH * 0.2, laneH * 0.2);
         const baseX = edgeX + s * squadDelayX;
 
-        // ---------- FRONTLINE (soakers & pokers) ----------
-        // shields hold the line, spears poke, soldiers fill volume
-        const nShields = clamp((wave >= 2 ? rint(0, 1 + Math.floor(wave / 6)) : 0), 0, 2);
-        const nSpears = clamp((wave >= 3 ? rint(0, 1 + Math.floor(wave / 5)) : 0), 0, 2);
-        const nSoldiers = clamp(2 + Math.floor(wave * 0.6) + rint(0, 1) + Math.floor(soldierBonusLate * 0.8), 3, 18);
+        // Enforce spawn bands so shields are always in front of supports:
+        //   frontline:  baseX .. baseX+14
+        //   midline:    baseX+16 .. baseX+30  (soldiers/spears)
+        //   backline:   baseX+44 .. baseX+70  (archers/utility)
+        const xFront = baseX;
+        const xMid   = baseX + 20;
+        const xBack  = baseX + 56;
 
-        // place frontline in a small arc so they don't stack perfectly
+        // ---------- FRONTLINE (soakers & pokers) ----------
+        // Scale counts with surgeMul and wave; clamp to keep sane limits
+        const nShields = clamp(
+            Math.floor(((wave >= 2 ? rint(0, 1 + Math.floor(wave / 6)) : 0)) * surgeMul + 0.25),
+            0, 3
+        );
+        const nSpears = clamp(
+            Math.floor(((wave >= 3 ? rint(0, 1 + Math.floor(wave / 5)) : 0)) * surgeMul + 0.25),
+            0, 3
+        );
+        const nSoldiers = clamp(
+            Math.floor((2 + Math.floor(wave * 0.6) + rint(0, 1) + Math.floor(soldierBonusLate * 0.8)) * surgeMul),
+            3, isSurge ? 22 : 18
+        );
+
+        // Shields always at the minimum X band
         for (let i = 0; i < nShields; i++) {
             const y = baseY + (i - (nShields - 1) / 2) * 12;
-            spawnBlue('shield', baseX + random(-6, 6), y, wave);
+            spawnBlue('shield', xFront + random(-6, 6), y, wave);
         }
+        // Spears right behind shields
         for (let i = 0; i < nSpears; i++) {
             const y = baseY + (i - (nSpears - 1) / 2) * 10;
-            spawnBlue('spear', baseX + 12 + random(-6, 6), y, wave);
+            spawnBlue('spear', xFront + 12 + random(-4, 4), y, wave);
         }
+        // Soldiers in the mid band
         for (let i = 0; i < nSoldiers; i++) {
-            // spread soldiers across a small band behind shields/spears
             const y = baseY + (i - (nSoldiers - 1) / 2) * 7;
-            spawnBlue('soldier', baseX + 18 + random(-8, 8), y, wave);
+            spawnBlue('soldier', xMid + random(-6, 6), y, wave);
         }
 
         // ---------- BACKLINE (DPS / utility) ----------
-        // mix of archers, ewizards, healer, summoner
-        const nArchers = clamp(rint((wave >= 2 ? 1 : 0), 1 + Math.floor(wave / 3)), 0, 6);
-        const nEwiz = clamp((wave >= 4 ? rint(0, 1 + Math.floor(wave / 6)) : 0), 0, 3);
-        const nHealers = clamp((wave >= 5 ? rint(0, 1 + Math.floor(wave / 7)) : 0), 0, 2);
-        const nSummon = clamp((wave >= 6 ? rint(0, 1 + Math.floor(wave / 8)) : 0), 0, 2);
+        // Reduce healers: cap at 1 and make them less frequent
+        const nArchers = clamp(
+            rint((wave >= 2 ? 1 : 0), 1 + Math.floor(wave / 3)),
+            0, isSurge ? 7 : 6
+        );
+        const nEwiz = clamp(
+            (wave >= 4 ? rint(0, 1 + Math.floor(wave / 6)) : 0),
+            0, 3
+        );
+        // Healers now rarer: only start at wave 6; geometric-ish 0/1 with bias to 0
+        let nHealers = 0;
+        if (wave >= 6) {
+            // 30% chance to spawn a single healer on normal waves, 45% on surge
+            const healChance = isSurge ? 0.45 : 0.30;
+            nHealers = (random() < healChance) ? 1 : 0;
+        }
+        const nSummon = clamp(
+            (wave >= 6 ? rint(0, 1 + Math.floor(wave / 8)) : 0),
+            0, 2
+        );
 
+        // Backline always in the back band so they never overtake shields
         for (let i = 0; i < nArchers; i++) {
             const y = baseY + (i - (nArchers - 1) / 2) * 12;
-            spawnBlue('archer', baseX + 40 + random(-8, 8), y, wave);
+            spawnBlue('archer', xBack + random(-8, 8), y, wave);
         }
         for (let i = 0; i < nEwiz; i++) {
             const y = baseY + (i - (nEwiz - 1) / 2) * 14;
-            spawnBlue('ewizard', baseX + 46 + random(-8, 8), y, wave);
+            spawnBlue('ewizard', xBack + 6 + random(-6, 6), y, wave);
         }
         for (let i = 0; i < nHealers; i++) {
             const y = baseY + (i - (nHealers - 1) / 2) * 14;
-            spawnBlue('healer', baseX + 52 + random(-8, 8), y, wave);
+            spawnBlue('healer', xBack + 12 + random(-6, 6), y, wave);
         }
         for (let i = 0; i < nSummon; i++) {
             const y = baseY + (i - (nSummon - 1) / 2) * 14;
-            spawnBlue('summoner', baseX + 58 + random(-8, 8), y, wave);
+            spawnBlue('summoner', xBack + 18 + random(-6, 6), y, wave);
         }
 
         // ---------- SPECIALS ----------
         // Reaper every few waves as a mini-boss (1 squad gets it)
         if (wave >= 7 && s === rint(0, squads - 1) && wave % 4 === 0) {
-            spawnBlue('reaper', baseX + 24, baseY + rint(-10, 10), wave);
+            spawnBlue('reaper', xMid + 8, baseY + rint(-10, 10), wave);
         }
     }
 
@@ -181,7 +220,7 @@ function spawnWave(wave) {
     if (wave >= 6 && !necroSpawned) {
         const lane = rint(0, lanes - 1);
         const y = laneH * (lane + 0.5) + random(-laneH * 0.15, laneH * 0.15);
-        const x = edgeX + squads * 10 + 64; // a bit further back
+        const x = edgeX + squads * 10 + 84; // a bit further back to respect bands
         spawnBlue('necromancer', x, y, wave);
         necroSpawned = true;
     }
@@ -190,12 +229,11 @@ function spawnWave(wave) {
 }
 
 
-
 function initSiege() {
     battling = true;
     siege.wave = 0;
     siege.nextWaveFrame = battleFrameCount + 60; // first wave after 1s
-    siege.gold = 0;
+    siege.gold = 500;
     siege.coins.length = 0;
     siege.running = true;
     siege.gameOver = false;
@@ -217,13 +255,13 @@ function spawnCastleRow() {
     castleWalls.length = 0;
 
     // Column position for the wall row (left side defending)
-    const x = width * 0.22;
+    const x = width * 0.15;
     castleAnchor.x = x;
     castleAnchor.y = height * 0.5;
 
     // Segment geometry
-    const segSize = max(width / 18, 64);            // visual size of each wall piece
-    const spacing = segSize * 0.5;                 // slight overlap to avoid gaps
+    const segSize = height / 10
+    const spacing = segSize * 1;                 // slight overlap to avoid gaps
     const n = ceil(height / spacing) + 1;           // cover entire height
 
     for (let i = 0; i < n; i++) {
@@ -302,5 +340,107 @@ function drawSiegeHUD() {
         text('BREACHED!', width / 2, height / 2);
         textSize(width / 40);
         text(`Waves survived: ${siege.wave}`, width / 2, height / 2 + width / 12);
+    }
+}
+
+// --- RETREAT HELPERS ---
+function orderRetreatToCastle(u) {
+    if (!u || !u.pos) return;
+    u.retreating = true;
+
+    // --- figure out the wall's X and place the retreat line just in front ---
+    const wallX = castleAnchor.x; 
+    const offset = (u.size || width / 60); // buffer so units don't overlap wall
+    const bandX = wallX + width/10 + offset * 1.5;    // retreat line slightly left of wall
+
+    // --- vertical distribution (lanes + jitter) ---
+    const lanes = 10;
+    const laneH = height / lanes;
+
+    if (u._retreatId == null) {
+        orderRetreatToCastle._uid = (orderRetreatToCastle._uid || 0) + 1;
+        u._retreatId = orderRetreatToCastle._uid;
+    }
+    const laneIdx = u._retreatId % lanes;
+    const laneCenterY = laneH * (laneIdx + 0.5);
+
+    // deterministic jitter per unit
+    let x = (u._retreatId | 0);
+    x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+    const jitter = ((x >>> 0) / 4294967296) - 0.5;
+
+    const slotX = bandX;
+    const slotY = constrain(laneCenterY + jitter * laneH * 0.4, laneH * 0.15, height - laneH * 0.15);
+
+    // --- steering toward slot with "arrive" slowdown ---
+    const dx = slotX - u.pos.x;
+    const dy = slotY - u.pos.y;
+    const d  = Math.hypot(dx, dy) || 1;
+
+    const spd = (u.maxSpeed || u.speed || 1.2);
+    const arriveR = Math.max(width, height) / 18;
+    const factor  = d < arriveR ? (d / arriveR) : 1;
+
+    const vx = (dx / d) * spd * factor;
+    const vy = (dy / d) * spd * factor;
+
+    const mix = 0.18;
+    u.vel.x = (u.vel.x ?? 0) * (1 - mix) + vx * mix;
+    u.vel.y = (u.vel.y ?? 0) * (1 - mix) + vy * mix;
+
+    if (typeof moveUnit === 'function') moveUnit(u);
+
+    // --- stop if basically at the line ---
+    if (d < arriveR * 0.5 || u.pos.x <= wallX - offset) {
+        u.vel.x *= 0.8;
+        u.vel.y *= 0.8;
+        if (Math.hypot(u.vel.x, u.vel.y) < 0.05) {
+            u.vel.x = 0;
+            u.vel.y = 0;
+        }
+    }
+}
+
+/** Clear retreat state when re-engaging */
+function cancelRetreat(u) {
+    if (u.retreating) u.retreating = false;
+}
+
+/** Core behavior: if unit has no targets and no enemies near, walk to castle */
+function fallbackRetreatBehaviorForUnit(u, enemies) {
+    if (!u || u.isDead || u.name === 'castlewall') return;
+
+    // If enemies around or we already have a valid target, cancel retreat.
+    if (u.target && u.target !== u && !u.target.isDead) {
+        cancelRetreat(u);
+        return;
+    }
+
+    // retreat line just before the castle wall
+    const wallX = castleAnchor.x;
+    const offset = (u.size || width / 60); // buffer so they don’t overlap the wall
+    const retreatX = wallX - offset * 1.5;
+
+    // if we are to the right of the retreat line, keep moving left
+    if (u.pos.x > retreatX) {
+        orderRetreatToCastle(u);
+    } else {
+        // already at or past retreat line → slow/stop
+        u.vel.x *= 0.85;
+        u.vel.y *= 0.85;
+        if (Math.hypot(u.vel.x, u.vel.y) < 0.05) {
+            u.vel.x = 0;
+            u.vel.y = 0;
+        }
+        u.retreating = true; // remain in retreat state until threats appear
+    }
+}
+
+
+/** Batch behavior for a whole team list */
+function fallbackRetreatBehavior(teamList, enemyList) {
+    for (let i = 0; i < teamList.length; i++) {
+        const u = teamList[i];
+        fallbackRetreatBehaviorForUnit(u, enemyList);
     }
 }

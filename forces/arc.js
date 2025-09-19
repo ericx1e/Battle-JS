@@ -64,7 +64,10 @@ function Arc(target, team) {
         this.hit.push(this.target)
         if (this.target.name == 'zombie') {
             this.charges -= 0.5
-        } else {
+        } else if (this.target.name == 'castlewall') {
+            this.charges -= 3
+        } 
+        else {
             this.charges--
         }
 

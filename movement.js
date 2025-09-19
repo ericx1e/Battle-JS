@@ -81,7 +81,12 @@ function updateGrid(allUnits) {
 function moveUnit(unit) {
     if (!unit.target || !unit.target.pos) {
         unit.target = unit;
-        return;
+        if (!unit.retreating) {
+            return;
+        }
+    }
+    if (unit.retreating) {
+        unit.pos.add(unit.vel)
     }
     if (distSquared(unit.pos, unit.target.pos) > sqr(unit.attackRange * 0.9)) {
         unit.vel = p5.Vector.sub(unit.target.pos, unit.pos).limit(unit.speed)

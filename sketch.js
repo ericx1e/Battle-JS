@@ -337,6 +337,10 @@ function gameLoop() {
         }
     }
 
+    if (mode == 'siege' && battling) {
+        fallbackRetreatBehavior(redTroops, blueTroops)
+    }
+
     // TODO: combine forces into one list
     for (let i = 0; i < blueForces.length; i++) {
         let force = blueForces[i]
@@ -367,8 +371,8 @@ function gameLoop() {
         }
 
         if (mode === 'siege' && toRemove.name !== 'zombie') {
-            const base = 1 + floor(random(0, 4));
-            const waveBonus = floor(siege.wave * 0.4); // scales a bit with wave
+            const base = 3 + floor(random(0, 4));
+            const waveBonus = floor(siege.wave * 3); // scales a bit with wave
             dropGold(toRemove.pos.x, toRemove.pos.y, base + waveBonus);
         }
 
