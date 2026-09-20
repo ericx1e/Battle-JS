@@ -3,25 +3,25 @@ function Reaper(x, y, team) {
     this.reset = function () {
         this.name = 'reaper'
         this.team = team
-        this.cost = 100
+        this.cost = BALANCE.reaper.cost
         this.forces = team == 'red' ? redForces : blueForces
 
         this.vel = createVector(0, 0)
         this.size = width / 80
-        this.speed = this.size / 20;
+        this.speed = this.size / 14; // fast enough to hunt the backline
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 200
+        this.maxHitpoints = BALANCE.reaper.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
-        this.attackPower = 35
-        this.attackSpeed = 45 //number of frames between attacks
+        this.attackPower = BALANCE.reaper.atk
+        this.attackSpeed = BALANCE.reaper.period //number of frames between attacks
         this.attackRange = this.size * 2
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
         this.attackRotate = 0
 
-        this.armor = 2 // reduces all damage taken
+        this.armor = BALANCE.reaper.armor // flat damage reduction per hit (see damage.js)
 
         this.takingDamageFrames = 0 //animation for getting hit
 
@@ -33,6 +33,8 @@ function Reaper(x, y, team) {
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
+        if (this._shadowFrame != frameCount) drawUnitShadow(this.size) // feet on the field (battle runs a shadow pass first)
+        translate(0, -bodyLift(this.size)) // the body stands above it
 
         if (healthBars) {
             strokeWeight(this.size / 5)
@@ -46,7 +48,9 @@ function Reaper(x, y, team) {
         drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
-        rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        rotate(unitFacing(this))
+        // spin blur: the whirling scythe reads as a full ring while it whirls
+        drawSwingStreak(this.size, this.attackRotate, -4 * PI, this.size * 1.15, -PI / 2)
         rotate(this.attackRotate)
         if (this.attackRotate < 0) {
             this.attackRotate *= 0.90
@@ -91,7 +95,7 @@ function Reaper(x, y, team) {
         updateTarget(this, foes)
 
         moveUnit(this)
-        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
+        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange + reachBonus(this.target))) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }

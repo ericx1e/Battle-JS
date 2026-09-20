@@ -20,15 +20,16 @@ function ReaperSweep(unit, range, damage, team) {
 
         if (this.frames == this.totalFrames) {
             let targetTeam = team == 'blue' ? 'red' : 'blue'
-            collided = checkCollision(this.pos, this.range, targetTeam)
+            // copy: takeDamage reuses the shared collision buffer mid-loop
+            const collided = checkTeamCollision(this.pos, this.range, targetTeam).slice()
             collided.forEach(foe => {
-                takeDamage(foe, this.damage)
+                takeDamage(foe, this.damage, unit, true)
                 if (foe.hitpoints <= 0) {
                     if (foe.name != 'zombie') {
                         heal(unit, (unit.maxHitpoints - unit.hitpoints) * .15)
                     }
                 }
-                knockbackUnit(foe)
+                knockbackUnit(foe, this.pos)
             });
         }
 

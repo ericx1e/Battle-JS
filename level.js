@@ -2,7 +2,7 @@ function Level(n) {
     this.n = n
     this.complete = false
     this.locked = true
-    let budgets = [90, 80, 70, 250, 700, 300, 400, 750, 2000]
+    let budgets = [90, 80, 70, 250, 700, 300, 400, 750, 1200]
     this.budget = budgets[n]
     this.money = this.budget
     this.started = false
@@ -105,6 +105,11 @@ function Level(n) {
                 if (blueTroops.length == 0) {
                     battling = false
                     status = 'victory'
+                    this.complete = true
+                    if (levels[n + 1]) {
+                        levels[n + 1].locked = false
+                    }
+                    saveProgress()
                 }
             }
         }
@@ -116,36 +121,14 @@ function Level(n) {
     }
 
     this.defeat = function () {
-
-        rectMode(CENTER)
-        fill(200)
-        rect(width / 2, height / 2, width, width / 6)
-        textSize(width / 12)
-        noStroke()
-        fill(0)
-        textAlign(CENTER, CENTER)
-        text('Defeat', width / 2, height / 2)
+        drawBanner('Defeat', 'click to retry — you kept your budget of $' + this.budget)
         if (mouseIsPressed) {
             currentLevel.load()
-            // currentLevel = undefined
-            // changeScreen('level_select')
         }
     }
 
     this.victory = function () {
-        this.complete = true
-        if (levels[n + 1]) {
-            levels[n + 1].locked = false
-        }
-
-        rectMode(CENTER)
-        fill(200)
-        rect(width / 2, height / 2, width, width / 6)
-        textSize(width / 12)
-        noStroke()
-        fill(0)
-        textAlign(CENTER, CENTER)
-        text('Victory!', width / 2, height / 2)
+        drawBanner('Victory!', 'click to continue')
         if (mouseIsPressed) {
             currentLevel = undefined
             changeScreen('level_select')

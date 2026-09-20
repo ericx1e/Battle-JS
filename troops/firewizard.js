@@ -1,9 +1,9 @@
-function Archer(x, y, team) {
+function FWizard(x, y, team) {
     this.pos = createVector(x, y)
     this.reset = function () {
-        this.name = 'archer'
+        this.name = 'fwizard'
         this.team = team
-        this.cost = BALANCE.archer.cost
+        this.cost = BALANCE.fwizard.cost
         this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
         this.vel = createVector(0, 0)
@@ -11,12 +11,12 @@ function Archer(x, y, team) {
         this.speed = this.size / 15;
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = BALANCE.archer.hp
+        this.maxHitpoints = BALANCE.fwizard.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
-        this.attackPower = 0
-        this.attackSpeed = BALANCE.archer.period //number of frames between attacks
-        this.attackRange = this.size * 28
+        this.attackPower = BALANCE.fwizard.atk
+        this.attackSpeed = BALANCE.fwizard.period //number of frames between attacks
+        this.attackRange = this.size * 25
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
         this.takingDamageFrames = 0 //animation for getting hit
@@ -26,6 +26,7 @@ function Archer(x, y, team) {
 
     this.reset()
 
+    let particles = []
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
@@ -50,14 +51,35 @@ function Archer(x, y, team) {
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         drawSettings(team, tranparency, this.size)
         noFill();
-        beginShape();
-        vertex(this.size / 2, -this.size / 1.2);
-        vertex(this.size / 2, this.size / 1.2);
-        vertex(this.size / 1.4, this.size / 3.5);
-        vertex(this.size / 1.4, -this.size / 3.5);
-        vertex(this.size / 2, -this.size / 1.2);
-        endShape();
-        // quad(this.size / 2, -this.size / 1.2, this.size / 2, this.size / 1.2, this.size / 1.5, this.size / 3, this.size / 1.5, -this.size / 3);
+
+        noFill();
+        line(this.size / 2, this.size / 3, this.size / 2, -this.size / 2)
+        let s = this.size / 3
+        ellipse(this.size / 2, -this.size / 2 - s / 2, s * 1.5)
+
+        if (frameCount % 5 == 0) {
+            particles.push({ h: random(100, 150), a: 255, x: this.size / 2, y: -this.size / 2 - s / 2, vx: random(-0.15, 0.15), vy: random(-0.5, -1.0) })
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            push()
+            // colorMode(HSB)
+            fill(p.a, p.h, 0, p.a)
+            noStroke()
+            // drawingContext.shadowColor = 'rgba(255, 183, 0, 1)';
+            // drawingContext.shadowBlur = p.a / 25;
+            ellipse(p.x, p.y, map(p.a, 255, 0, this.size / 3, 0));
+            pop()
+
+            p.a -= 5
+            p.x += p.vx; p.y += p.vy;
+
+
+            if (p.a <= 0) {
+                particles.splice(i, 1);
+            }
+        }
 
         // sphere(this.size / 2)
         if (this.takingDamageFrames > 0) {
@@ -100,8 +122,9 @@ function Archer(x, y, team) {
 
 
     this.attack = function () {
-        let arrow = new Arrow(this.pos, this.target, team) // whole unit: the arrow leads a marching target
-        arrow.damage *= this.dmgMult || 1
-        this.projectiles.push(arrow)
+        spawnRing(this.pos.x, this.pos.y, team, this.size * 2)
+        let fireball = new Fireball(this.pos, this.target.pos, team)
+        fireball.damage *= this.dmgMult || 1
+        this.projectiles.push(fireball)
     }
 }

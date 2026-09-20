@@ -3,21 +3,24 @@ function Shield(x, y, team) {
     this.reset = function () {
         this.name = 'shield'
         this.team = team
-        this.cost = 30
+        this.cost = BALANCE.shield.cost
         this.vel = createVector(0, 0)
         this.size = width / 60
-        this.speed = this.size / 30;
+        this.speed = this.size / 14; // marches at line pace — a wall that lags can't hold the front
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 400
+        this.maxHitpoints = BALANCE.shield.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
-        this.attackPower = 3
-        this.attackSpeed = 15 //number of frames between attacks
+        this.attackPower = BALANCE.shield.atk
+        this.attackSpeed = BALANCE.shield.period //number of frames between attacks
         this.attackRange = this.size * 1.5
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
-        this.armor = 2 // reduces all damage taken TODO: implement this lol
+        this.armor = BALANCE.shield.armor // flat damage reduction per hit (see damage.js)
+        this.blocksProjectiles = true     // frontal arrows/spears bounce off (magic ignores it)
+        this.blockMelee = 0.3             // frontal melee damage reduced 30%
+        this.blockedFrames = 0            // shield flash on a successful block
 
         this.takingDamageFrames = 0 //animation for getting hit
 
@@ -29,6 +32,8 @@ function Shield(x, y, team) {
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
+        if (this._shadowFrame != frameCount) drawUnitShadow(this.size) // feet on the field (battle runs a shadow pass first)
+        translate(0, -bodyLift(this.size)) // the body stands above it
 
         if (healthBars) {
             strokeWeight(this.size / 5)
@@ -42,12 +47,22 @@ function Shield(x, y, team) {
         drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
-        rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        rotate(unitFacing(this))
         drawSettings(team, tranparency, this.size)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
         drawSettings(team, tranparency, this.size)
-        // noFill();
+        if (this.blockedFrames > 0) {
+            // bright flash when something plinks off the shield
+            stroke(255, 255 * this.blockedFrames / 8)
+            fill(255, 150 * this.blockedFrames / 8)
+            this.blockedFrames--
+        }
+        // the bash: the whole shield rams forward and recovers
+        if (this.bashFrames > 0) {
+            translate(this.size * 0.28 * this.bashFrames / 6, 0)
+            this.bashFrames--
+        }
         beginShape();
         vertex(this.size / 4, -this.size / 2.5);
         vertex((this.size / 1.5 + this.size / 4) / 2, -this.size / 2.1);
@@ -78,12 +93,18 @@ function Shield(x, y, team) {
 
         updateTarget(this, foes)
 
-        moveUnit(this)
-        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
+        // the shield FRONTLINES: it advances with the army, and holds exactly
+        // while foes are at the shield (bash reach) — it fights the press in
+        // front of it instead of wandering after one shoved target.
+        const pressing = checkTeamCollision(this.pos, this.attackRange * 1.2, team == 'red' ? 'blue' : 'red')
+        if (pressing.length) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
-                this.attack();
+                this.attack(pressing.slice()) // copy: takeDamage reuses the collision buffer
             }
-            // this.checkCollision(allies.concat(foes))
+            checkUnitCollision(this)
+            checkBoundaries(this)
+        } else {
+            moveUnit(this)
         }
 
         // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
@@ -94,12 +115,22 @@ function Shield(x, y, team) {
     }
 
 
-    this.attack = function () {
-        takeDamage(this.target, this.attackPower)
-        knockbackUnit(this.target)
-
-        // let moveVector = p5.Vector.sub(this.target.pos, this.pos).setMag(this.target.speed * 2)
-        // this.target.pos.add(moveVector)
-        // this.target.speed = -this.maxSpeed
+    // shield bash sweeps the frontal arc: everyone actually PRESSING the
+    // shield gets struck and shoved back (up to 3 — it's a wall, not a whirlwind)
+    this.attack = function (pressing) {
+        this.bashFrames = 6
+        const facing = unitFacing(this)
+        let hit = 0
+        for (let i = 0; i < pressing.length && hit < 3; i++) {
+            const f = pressing[i]
+            if (!f || f.isDead) continue
+            const ang = atan2(f.pos.y - this.pos.y, f.pos.x - this.pos.x)
+            let d = abs(ang - facing) % TWO_PI
+            if (d > PI) d = TWO_PI - d
+            if (d > PI * 0.45) continue // behind the shield — no bash without facing
+            takeDamage(f, this.attackPower, this, true) // a sweep: no follow-through
+            knockbackUnit(f, this.pos, 0.5) // firm shove, not a launch — attackers still get their swings
+            hit++
+        }
     }
 }

@@ -15,6 +15,8 @@ let blueToRemove = []
 let blueProjectiles = []
 let blueForces = []
 
+let walls = []
+
 let newTroop
 let newTroopId
 let newTroopGhost
@@ -45,6 +47,14 @@ let shared
 let lobbyName
 
 let autochessEngine
+let autochessBestStage = 0
+let fpsSmoothed = 60
+
+// sudden death: battles that drag past this many frames start draining everyone,
+// so tank-wall standoffs always resolve (siege is exempt — endless is the point there)
+const FATIGUE_DELAY = 60 * 60
+let fatigueStart = 0
+let prevBattling = false
 
 function preload() {
     font = loadFont("Ubuntu/Ubuntu-Regular.ttf")
@@ -55,21 +65,32 @@ let canvasWidth
 let canvasHeight
 
 function setup() {
-    cellSize = width / 5
-
     // frameRate(10)
     textFont(font)
     canvasWidth = window.innerWidth * 5 / 6
     // canvasHeight = window.innerHeight * 3 / 4
     canvasHeight = canvasWidth / 16 * 9
     canvas = createCanvas(canvasWidth, canvasHeight)
+    cellSize = width / 20
+
+    setupGrid();
+
     canvas.position((window.innerWidth - canvasWidth) / 2, (window.innerHeight - canvasHeight) / 2)
     zoom = (height / 2) / tan(PI / 6)
 
     eraseSize = width / 40
 
-    let buttonSize = width / 14
-    titleButtons = [new Button(width / 2 - 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'), new Button(width / 2 - 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_autochess'), new Button(width / 2 + 1.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'), new Button(width / 2 + 4.5 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus')]
+    // five equal mode buttons in one row — siege used to be a half-height
+    // afterthought stuffed in the corner; it's a real mode, same billing as
+    // the other four
+    let buttonSize = width / 15
+    titleButtons = [
+        new Button(width / 2 - 6 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_campaign'),
+        new Button(width / 2 - 3 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_autochess'),
+        new Button(width / 2, height * 4 / 5, buttonSize * 2, buttonSize, 'title_sandbox'),
+        new Button(width / 2 + 3 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_versus'),
+        new Button(width / 2 + 6 * buttonSize, height * 4 / 5, buttonSize * 2, buttonSize, 'title_siege'),
+    ]
 
     let levelButtonSize = width / 13
     let levelButtonsPerRow = 8
@@ -79,9 +100,16 @@ function setup() {
         levelButtons.push(new Button(levelButtonSize * 1.25 + (level % levelButtonsPerRow) * levelButtonSize * 1.5, width / 20 + levelButtonSize + parseInt(level / levelButtonsPerRow) * levelButtonSize * 1.5, levelButtonSize, levelButtonSize, 'level' + level))
     }
     levels[0].locked = false
+    loadProgress()
 
     let versusButtonSize = width / 13
     versusLobbyButtons = [new Button(versusButtonSize * 1.25, width / 40 + versusButtonSize / 4, versusButtonSize, versusButtonSize / 2, 'return_to_title'), new Button(width / 2, height * 4 / 5, versusButtonSize * 2, versusButtonSize, 'versus_join')]
+
+
+    // walls = [new Wall(width / 2, 0, 300), new Wall(width / 2, height, 300)]
+    // for (let i = 0; i < 150; i++) {
+    //     walls.push(new Wall(random(0, width), random(0, height), 20))
+    // }
 }
 
 function draw() {
@@ -104,16 +132,41 @@ function draw() {
     }
 }
 
+let titleDots = []
+
 function titleLoop() {
     background(39)
 
-    strokeWeight(width / 200)
-    fill(120, 120, 255, 150)
-    stroke(150, 150, 255)
-    ellipse(width / 10, height * 4 / 5, width / 10)
-    fill(255, 120, 120, 150)
-    stroke(255, 150, 150)
-    ellipse(width * 9.2 / 10, height * 3 / 5, width / 10)
+    // two armies drifting on their own sides of the field — the title
+    // screen's background is literally the game's premise, not decoration
+    // unrelated to it. each dot wanders but is gently pulled back toward its
+    // team's half, so red and blue read as two loose gathering hosts.
+    if (titleDots.length == 0) {
+        for (let i = 0; i < 26; i++) {
+            const team = i < 13 ? 'red' : 'blue'
+            const homeX = team == 'red' ? random(width * 0.08, width * 0.42) : random(width * 0.58, width * 0.92)
+            titleDots.push({
+                x: homeX, y: random(height * 0.15, height * 0.65),
+                homeX,
+                vx: random(-0.25, 0.25), vy: random(-0.15, 0.15),
+                s: random(width / 300, width / 110),
+                team,
+            })
+        }
+    }
+    noStroke()
+    for (const d of titleDots) {
+        if (d.team == 'red') {
+            fill(255, 120, 120, 45)
+        } else {
+            fill(120, 120, 255, 45)
+        }
+        ellipse(d.x, d.y, d.s)
+        d.x += d.vx + (d.homeX - d.x) * 0.0008 // a soft leash back toward its side
+        d.y += d.vy
+        if (d.y < -d.s) d.y = height + d.s
+        if (d.y > height + d.s) d.y = -d.s
+    }
 
     let titleSize = width / 10
     let offset = titleSize / 12
@@ -181,29 +234,59 @@ function versusLoadingLoop() {
 
 function gameLoop() {
     background(51)
-    if (battling) {
-        battleFrameCount++
-        if (shared) {
-        }
-        if (mode == 'autochess') {
 
+    // faint grid dots give the field texture without breaking the flat look
+    noStroke()
+    fill(255, 8)
+    for (let gx = cellSize; gx < width; gx += cellSize) {
+        for (let gy = cellSize; gy < height; gy += cellSize) {
+            ellipse(gx, gy, width / 500)
         }
+    }
+
+    // soft vignette for depth
+    push()
+    const vg = drawingContext.createRadialGradient(width / 2, height / 2, height / 2, width / 2, height / 2, height * 1.15)
+    vg.addColorStop(0, 'rgba(0,0,0,0)')
+    vg.addColorStop(1, 'rgba(0,0,0,0.35)')
+    drawingContext.fillStyle = vg
+    rectMode(CORNER)
+    rect(0, 0, width, height)
+    pop()
+
+    updateGrid(redTroops, blueTroops);
+
+    if (battling) {
+        if (!prevBattling) {
+            fatigueStart = battleFrameCount // fresh battle → reset the sudden-death clock
+        }
+        battleFrameCount++
     }
 
     if (canZoom) {
         camera(-panX, -panY, zoom, -0, -0, 0, 0, 1, 0)
     }
     textFont(font)
-    fill(100)
     noStroke()
     textSize(20)
-    strokeWeight(4)
-    stroke(100)
-    // drawingContext.setLineDash([width / 50, width / 50])
+    strokeWeight(width / 600)
+    stroke(255, 30)
     line(width / 2, 0, width / 2, height)
     noFill()
+    stroke(255, 40)
     rectMode(CENTER)
     rect(width / 2, height / 2, width, height)
+    textAlign(CENTER, CENTER)
+    drawSettings('red')
+    noStroke()
+    text(redTroops.length, width / 8, height / 2)
+    drawSettings('blue')
+    noStroke()
+    text(blueTroops.length, width * 7 / 8, height / 2)
+
+    // all shadows under all bodies — packed lines must not shade each other
+    drawTroopShadows(blueTroops)
+    drawTroopShadows(redTroops)
 
     let bi = 0;
     let ri = 0;
@@ -225,7 +308,6 @@ function gameLoop() {
     //     }
     // }
 
-    allUnits = []
     while (blueTroops[bi] || redTroops[ri]) {
         let blueTroop = blueTroops[bi]
         let redTroop = redTroops[ri]
@@ -234,16 +316,22 @@ function gameLoop() {
             if (blueTroop.name == 'necromancer') {
                 blueHasNecro = true
             }
-            allUnits.push(blueTroop)
+
             blueTroop.show()
+            if (blueTroop.vet) drawVetPips(blueTroop)
             if (battling) {
                 let removed = blueTroop.update(blueTroops, redTroops)
                 if (blueTroop.isDead) {
-                    if (blueToRemove.includes(blueTroop)) {
+                    if (blueTroop._queuedRemove) {
                         blueTroop.size *= 0.999
 
                     } else {
+                        blueTroop._queuedRemove = true
                         blueToRemove.push(blueTroop)
+                    }
+                } else {
+                    if (bi == battleFrameCount % blueTroops.length) {
+                        updateTarget(blueTroop, redTroops)
                     }
                 }
                 if (blueTroop.name == 'necromancer' && removed) {
@@ -256,15 +344,21 @@ function gameLoop() {
             if (redTroop.name == 'necromancer') {
                 redHasNecro = true
             }
-            allUnits.push(redTroop)
+
             redTroop.show()
+            if (redTroop.vet) drawVetPips(redTroop)
             if (battling) {
                 let removed = redTroop.update(redTroops, blueTroops)
                 if (redTroop.isDead) {
-                    if (redToRemove.includes(redTroop)) {
+                    if (redTroop._queuedRemove) {
                         redTroop.size *= 0.999
                     } else {
+                        redTroop._queuedRemove = true
                         redToRemove.push(redTroop)
+                    }
+                } else {
+                    if (ri == battleFrameCount % redTroops.length) {
+                        updateTarget(redTroop, blueTroops)
                     }
                 }
                 if (redTroop.name == 'necromancer' && removed) {
@@ -277,8 +371,6 @@ function gameLoop() {
             }
             ri++;
         }
-
-        updateGrid(allUnits)
     }
 
     if (shared && shared.redTroops && shared.blueTroops) {
@@ -311,6 +403,10 @@ function gameLoop() {
         }
     }
 
+    if (mode == 'siege' && battling) {
+        fallbackRetreatBehavior(redTroops, blueTroops)
+    }
+
     // TODO: combine forces into one list
     for (let i = 0; i < blueForces.length; i++) {
         let force = blueForces[i]
@@ -328,63 +424,73 @@ function gameLoop() {
         }
     }
 
-    for (let i = 0; i < blueToRemove.length; i++) { //backwards to not mess up index while splicing
-        let toRemove = blueToRemove[i]
-        let index = blueTroops.indexOf(toRemove)
-        if (index == -1) {
-            // toRemove.splice(i, 1)
-            // i--
-            continue
-        }
-        if (blueHasNecro && toRemove.name != 'zombie' && toRemove.name != 'necromancer') {
-            continue
-        }
-        blueTroops.splice(index, 1)
-        i--
-        blueToRemove.splice(i, 1)
-        // i--
-    }
-
-    for (let i = 0; i < redToRemove.length; i++) {
-        let toRemove = redToRemove[i]
-        let index = redTroops.indexOf(toRemove)
-        if (index == -1) {
-            // toRemove.splice(i, 1)
-            // i--
-            continue
-        }
-        if (redHasNecro && toRemove.name != 'zombie' && toRemove.name != 'necromancer') {
-            continue
-        }
-        redTroops.splice(index, 1)
-        i--
-        redToRemove.splice(i, 1)
-    }
+    flushRemovals(blueTroops, blueToRemove, blueHasNecro, mode === 'siege', mode === 'autochess')
+    flushRemovals(redTroops, redToRemove, redHasNecro, false, false)
 
     updateProjectiles(blueProjectiles)
     updateProjectiles(redProjectiles)
 
-    /*
+    walls.forEach(wall => {
+        wall.show()
+        wall.update()
+    });
+
+    updateEmbers()
+    updateRings()
+
+    fpsSmoothed = lerp1(fpsSmoothed, frameRate(), 0.05)
     noStroke()
-    fill(255)
-    text('fps: ' + Math.floor(frameRate()), 50, 50)
-    */
+    fill(255, 150)
+    textSize(width / 80)
+    textAlign(LEFT, BOTTOM)
+    text('fps: ' + Math.round(fpsSmoothed), width / 100, height - width / 100)
+    textSize(20)
 
     if (mode == 'campaign' && currentLevel) {
         noStroke()
         fill(70, 200, 70)
-        textAlign(CORNER)
+        textAlign(LEFT, TOP)
         text('$' + currentLevel.money, width / 20, width / 20)
     }
 
     if (mode == 'autochess') {
         noStroke()
         fill(70, 200, 70)
-        textAlign(CORNER)
+        textAlign(LEFT, TOP)
         // text('$' + currentLevel.money, width / 20, width / 20)
         if (autochessEngine) {
             autochessEngine.update()
             autochessEngine.showUI()
+        }
+    }
+
+    if (mode == 'siege') {
+        updateSiege();
+        updateCoins();
+        drawCoins();
+        drawSiegeHUD();
+    }
+
+    // sudden death: escalating decay ends stalled battles — only where a battle
+    // must resolve (campaign, autochess); sandbox and siege are exempt
+    if (battling && (mode == 'campaign' || mode == 'autochess')) {
+        const elapsed = battleFrameCount - fatigueStart
+        if (elapsed > FATIGUE_DELAY) {
+            if (elapsed % 15 == 0) {
+                const ramp = 1 + (elapsed - FATIGUE_DELAY) / 900
+                applyFatigue(redTroops, ramp)
+                applyFatigue(blueTroops, ramp)
+            }
+            noFill()
+            stroke(255, 80, 80, 60 + 40 * sin(frameCount / 8))
+            strokeWeight(width / 250)
+            rectMode(CENTER)
+            rect(width / 2, height / 2, width * 0.995, height * 0.99)
+            noStroke()
+            fill(255, 110, 110, 220)
+            textAlign(CENTER, BOTTOM)
+            textSize(width / 60)
+            text('sudden death', width / 2, height - width / 60)
         }
     }
 
@@ -401,7 +507,8 @@ function gameLoop() {
             fill(255)
             noStroke()
             textSize(width / 50)
-            textAlign(CORNER, CORNER)
+            // textAlign(CORNER, CORNER)
+            textAlign(LEFT, TOP)
             // text("\t<<\tclick the left edge to open menu", 0, width / 10)
             stroke(255)
             strokeWeight(this.size / 5)
@@ -418,38 +525,7 @@ function gameLoop() {
             } else {
                 team = 'blue'
             }
-            switch (newTroopId) {
-                case 'soldier':
-                    newTroopGhost = new Soldier(mouseX, mouseY, team)
-                    break;
-                case 'archer':
-                    newTroopGhost = new Archer(mouseX, mouseY, team)
-                    break
-                case 'spear':
-                    newTroopGhost = new Spear(mouseX, mouseY, team)
-                    break
-                case 'necromancer':
-                    newTroopGhost = new Necromancer(mouseX, mouseY, team)
-                    break
-                case 'summoner':
-                    newTroopGhost = new Summoner(mouseX, mouseY, team)
-                    break
-                case 'ewizard':
-                    newTroopGhost = new EWizard(mouseX, mouseY, team)
-                    break
-                case 'shield':
-                    newTroopGhost = new Shield(mouseX, mouseY, team)
-                    break
-                case 'healer':
-                    newTroopGhost = new Healer(mouseX, mouseY, team)
-                    break
-                case 'reaper':
-                    newTroopGhost = new Reaper(mouseX, mouseY, team)
-                    break
-                default:
-                    newTroopGhost = undefined
-                    break
-            }
+            newTroopGhost = newTroopId ? makeTroop(newTroopId, mouseX, mouseY, team) : undefined
             if (newTroopGhost) {
                 if (team == 'red' || mode == 'sandbox') {
                     newTroopGhost.show(50);
@@ -485,11 +561,45 @@ function gameLoop() {
         mouseReleased()
     }
 
+    prevBattling = battling
+}
+
+// remove dead troops queued this frame; backwards so splicing can't skip entries.
+// while a necromancer lives, non-zombie corpses stay on the field for it to raise.
+function flushRemovals(troops, toRemove, hasNecro, dropSiegeGold, countKills) {
+    for (let i = toRemove.length - 1; i >= 0; i--) {
+        const t = toRemove[i]
+        const index = troops.indexOf(t)
+        if (index == -1) { // already gone (e.g. raised by a necromancer)
+            toRemove.splice(i, 1)
+            continue
+        }
+
+        // pay the bounty the moment the kill lands — even if a necromancer
+        // holds the corpse on the field (or later consumes it)
+        if (dropSiegeGold && t.name !== 'zombie' && !t._bountyPaid) {
+            t._bountyPaid = true
+            // bounty proportional to the slain troop's worth — big kills pay big.
+            // 70% of cost: generous, but bounded by what the wave contains
+            dropGold(t.pos.x, t.pos.y, max(3, ceil((t.cost || 10) * 0.7)));
+        }
+
+        if (hasNecro && t.name != 'zombie' && t.name != 'necromancer') {
+            continue
+        }
+
+        t._queuedRemove = false
+        if (t._deathEffect) t._deathEffect(t) // buff hooks (e.g. exploding zombies)
+        spawnRing(t.pos.x, t.pos.y, t.team, t.size * 1.2) // death pop
+        troops.splice(index, 1)
+        toRemove.splice(i, 1)
+        if (countKills && autochessEngine) autochessEngine.enemyKills++
+    }
 }
 
 function updateProjectiles(projectiles) {
     for (let i = 0; i < projectiles.length; i++) {
-        projectile = projectiles[i]
+        let projectile = projectiles[i]
         projectile.show()
         if (battling) {
             if (projectile.move()) {
@@ -568,6 +678,15 @@ function mousePressed() {
             if (mode == 'autochess') {
                 autochessEngine.onMouseDown()
             }
+            if (mode == 'siege' && siege.repairButton) {
+                siege.repairButton.onClick()
+            }
+            if (mode == 'siege' && siege.barracksBuildButton) {
+                siege.barracksBuildButton.onClick()
+            }
+            if (mode == 'siege' && siege.barracksUpgradeButton) {
+                siege.barracksUpgradeButton.onClick()
+            }
             break
     }
 }
@@ -588,46 +707,14 @@ function mouseReleased() {
                 }
             } else {
                 team = 'blue'
-                if (mode == 'campaign') {
+                if (mode == 'campaign' || mode == 'siege') {
                     return
                 }
                 if (shared && partyIsHost()) {
                     return
                 }
             }
-            newTroop = undefined
-            switch (newTroopId) {
-                case 'soldier':
-                    newTroop = new Soldier(mouseX, mouseY, team)
-                    break
-                case 'archer':
-                    newTroop = new Archer(mouseX, mouseY, team)
-                    break
-                case 'spear':
-                    newTroop = new Spear(mouseX, mouseY, team)
-                    break
-                case 'necromancer':
-                    newTroop = new Necromancer(mouseX, mouseY, team)
-                    break
-                case 'summoner':
-                    newTroop = new Summoner(mouseX, mouseY, team)
-                    break
-                case 'ewizard':
-                    newTroop = new EWizard(mouseX, mouseY, team)
-                    break
-                case 'shield':
-                    newTroop = new Shield(mouseX, mouseY, team)
-                    break
-                case 'healer':
-                    newTroop = new Healer(mouseX, mouseY, team)
-                    break
-                case 'reaper':
-                    newTroop = new Reaper(mouseX, mouseY, team)
-                    break
-                case 'wall':
-                    newTroop = new Wall(mouseX, mouseY, team)
-                    break
-            }
+            newTroop = newTroopId ? makeTroop(newTroopId, mouseX, mouseY, team) : undefined
 
             if (newTroop) {
                 if (mode == 'campaign') {
@@ -637,6 +724,11 @@ function mouseReleased() {
                     }
                 } else if (mode == 'sandbox') {
                     team == 'red' ? redTroops.push(newTroop) : blueTroops.push(newTroop)
+                } else if (mode == 'siege') {
+                    if (team == 'red' && siege.gold >= newTroop.cost) {
+                        redTroops.push(newTroop)
+                        siege.gold -= newTroop.cost
+                    }
                 }
                 if (shared) {
                     team == 'red' ? shared.redTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, w: width, h: height }) : shared.blueTroops.push({ x: newTroop.pos.x, y: newTroop.pos.y, firstAttackFrame: newTroop.firstAttackFrame, w: width, h: height })
@@ -644,6 +736,9 @@ function mouseReleased() {
             }
 
             panning = false
+        }
+        if (key == 'w') {
+            walls.push(new Wall(mouseX, mouseY, 100))
         }
     }
 }

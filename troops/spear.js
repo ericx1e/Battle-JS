@@ -3,7 +3,7 @@ function Spear(x, y, team) {
     this.reset = function () {
         this.name = 'spear'
         this.team = team
-        this.cost = 60
+        this.cost = BALANCE.spear.cost
         this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
         this.vel = createVector(0, 0)
@@ -11,17 +11,18 @@ function Spear(x, y, team) {
         this.speed = this.size / 30;
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 120
+        this.maxHitpoints = BALANCE.spear.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
-        this.attackPower = 8
-        this.attackSpeed = 30 //number of frames between attacks
+        this.attackPower = BALANCE.spear.atk
+        this.attackSpeed = BALANCE.spear.period //number of frames between attacks
         this.rangedAttackSpeed = 90 //number of frames between attacks
         this.attackRange = this.size * 3
         this.rangedAttackRange = this.size * 30
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
         this.firstRangedAttackFrame = parseInt(random(0, this.rangedAttackSpeed))
         this.charges = 3
+        this._rearm = 0 // frames spent disengaged, recovering javelins
 
         this.takingDamageFrames = 0 //animation for getting hit
 
@@ -33,6 +34,8 @@ function Spear(x, y, team) {
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
+        if (this._shadowFrame != frameCount) drawUnitShadow(this.size) // feet on the field (battle runs a shadow pass first)
+        translate(0, -bodyLift(this.size)) // the body stands above it
 
         if (healthBars) {
             strokeWeight(this.size / 5)
@@ -46,7 +49,7 @@ function Spear(x, y, team) {
         drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
-        rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        rotate(unitFacing(this))
         drawSettings(team, tranparency, this.size)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
@@ -92,6 +95,18 @@ function Spear(x, y, team) {
     this.update = function (allies, foes) {
         if (this.isDead) return
 
+        // skirmish rhythm: javelins are recovered while disengaged (1 per 3s,
+        // max 3) — the volley is a cycle, not a one-time alpha strike
+        if (this.charges < 3) {
+            const disengaged = this.target === this || this.target.isDead ||
+                distSquared(this.pos, this.target.pos) > sqr(this.rangedAttackRange * 0.5)
+            if (disengaged) {
+                if (++this._rearm >= 180) { this._rearm = 0; this.charges++ }
+            } else {
+                this._rearm = 0
+            }
+        }
+
         if (foes.length == 0) {
             this.target = this
             return
@@ -104,13 +119,13 @@ function Spear(x, y, team) {
         updateTarget(this, foes)
 
         moveUnit(this)
-        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
+        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange + reachBonus(this.target))) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }
             // this.checkCollision(allies.concat(foes))
         }
-        if (this.charges > 0 && distSquared(this.pos, this.target.pos) < sqr(this.rangedAttackRange)) {
+        if (this.charges > 0 && distSquared(this.pos, this.target.pos) < sqr(this.rangedAttackRange + reachBonus(this.target))) {
             if ((battleFrameCount - this.firstRangedAttackFrame) % this.rangedAttackSpeed == 0) {
                 this.rangedAttack();
                 this.charges--
@@ -127,13 +142,13 @@ function Spear(x, y, team) {
 
 
     this.attack = function () {
-        takeDamage(this.target, this.attackPower)
-        let moveVector = p5.Vector.sub(this.target.pos, this.pos).setMag(this.target.speed * 2)
-        this.target.pos.add(moveVector)
-        this.target.speed = -this.maxSpeed
+        takeDamage(this.target, this.attackPower, this)
+        knockbackUnit(this.target, this.pos, 0.3) // the poke keeps foes at spear's length
     }
 
     this.rangedAttack = function () {
-        this.projectiles.push(new ThrownSpear(this.pos, this.target.pos, team))
+        let spear = new ThrownSpear(this.pos, this.target.pos, team)
+        spear.damage *= this.dmgMult || 1
+        this.projectiles.push(spear)
     }
 }

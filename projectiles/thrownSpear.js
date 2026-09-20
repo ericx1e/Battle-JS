@@ -11,12 +11,42 @@ function ThrownSpear(start, target, team) {
     this.hit = []
     // this.pierce = 5
 
+    // thrown THROUGH the mark: the javelin is aimed past its target, skewers
+    // everything along the lane (flat pierce with decaying damage), and comes
+    // down planted in the earth at the end of its cast. the hop is visual-only
+    // and shallow, so mid-flight hits still read fine.
+    const castRange = dist(start.x, start.y, target.x, target.y) * 1.45
+    this._flown = 0
+    this._hopT = max(1, castRange / this.speed)
+    this._hopMax = min(castRange * 0.035, width / 90) // a javelin's flat trajectory, not an arrow's arc
+    this._z = 0
+
     this.show = function () {
+        // spent javelin planted in the ground: fletching skyward, fading away
+        if (this.stuckFrames !== undefined) {
+            push()
+            translate(this.pos.x, this.pos.y)
+            rotate(this._groundRot !== undefined ? this._groundRot : this.rotation)
+            drawSettings(team, 200 * this.stuckFrames / 25)
+            line(0, 0, -this.size * 2, 0) // shaft out of the ground
+            let tailS = this.size / 6
+            line(-this.size * 2, 0, -this.size * 2 - tailS, tailS)
+            line(-this.size * 2, 0, -this.size * 2 - tailS, -tailS)
+            pop()
+            return
+        }
+        // shadow tracks the ground beneath the throw
+        noStroke()
+        fill(0, 80)
+        ellipse(this.pos.x, this.pos.y, this.size * 1.3, this.size * 0.45)
+
+        // pitch with the hop: tail-down going up, tip-down coming down
+        const s = this._flown / this._hopT
+        const zVel = s < 1 ? this._hopMax * 4 * (1 - 2 * s) / this._hopT : 0
         drawSettings(team)
-        // line(this.pos.x + drawVec.x, this.pos.y + drawVec.y, this.pos.x - drawVec.x, this.pos.y - drawVec.y)
         push()
-        translate(this.pos.x, this.pos.y)
-        rotate(this.rotation)
+        translate(this.pos.x, this.pos.y - bodyLift(width / 100) - this._z) // rides the standing plane
+        rotate(atan2(this.vel.y - zVel, this.vel.x))
         this.drawSpear(0, 0, team)
         /*
         line(-this.size * 5, 0, 0, 0)
@@ -58,21 +88,36 @@ function ThrownSpear(start, target, team) {
     }
 
     this.move = function () {
-        this.pos.add(this.vel)
+        if (this.stuckFrames !== undefined) {
+            return --this.stuckFrames <= 0
+        }
 
-        // this.vel.mult(0.98)
-        if (this.vel.mag() <= this.speed / 5) {
-            return true
+        this.pos.add(this.vel)
+        this._flown++
+        const s = this._flown / this._hopT
+        this._z = s < 1 ? this._hopMax * 4 * s * (1 - s) : 0
+
+        // the cast is spent — or too many bodies bled its force — and the
+        // javelin falls to earth, planted where it stops
+        if (s >= 1 || this.vel.mag() <= this.speed / 5) {
+            this.stuckFrames = 25
+            this._z = 0
+            const zVelEnd = this._hopMax * 4 * (1 - 2 * min(s, 1)) / this._hopT
+            this._groundRot = atan2(this.vel.y - zVelEnd, this.vel.x)
+            return false
         }
 
         let targetTeam = team == 'blue' ? 'red' : 'blue'
-        let collided = checkCollision(this.pos, this.size / 2, targetTeam)
+        let collided = checkTeamCollision(this.pos, this.size / 2, targetTeam)
         if (collided.length) {
             other = collided[0]
+            if (other.blocksProjectiles && isFrontal(other, { x: other.pos.x - this.vel.x, y: other.pos.y - this.vel.y })) {
+                other.blockedFrames = 8 // even piercing spears stop on a raised shield
+                return true
+            }
             if (!this.hit.includes(other) && distSquared(this.pos, other.pos) < sqr(this.size / 2 + other.size)) {
                 takeDamage(other, this.damage)
                 this.hit.push(other)
-                other.pos.add(this.vel)
                 other.speed = 0
                 // knockbackUnit(other, targets)
                 this.vel.mult(0.9)
@@ -80,6 +125,9 @@ function ThrownSpear(start, target, team) {
                 // let moveVector = p5.Vector.sub(other.pos, this.pos).setMag(other.speed * 2)
                 // other.pos.add(moveVector)
                 // other.speed = -other.maxSpeed
+                if (other.name == 'castlewall') {
+                    return true
+                }
             }
         }
         if (this.pos.x - this.size < 0 || this.pos.x + this.size > width || this.pos.y - this.size < 0 || this.pos.y + this.size > height) {

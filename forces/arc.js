@@ -1,10 +1,10 @@
-function Arc(target, team) {
+function Arc(target, team, dmgMult) {
     this.name = 'arc'
 
     this.target = target
     this.nextTarget;
     this.charges = 12
-    this.damage = 10
+    this.damage = 10 * (dmgMult || 1)
     this.range = width / 25
 
     this.isDone
@@ -31,7 +31,7 @@ function Arc(target, team) {
         // }
 
         let targetTeam = team == 'blue' ? 'red' : 'blue'
-        collided = checkCollision(this.target.pos, this.range, targetTeam)
+        collided = checkTeamCollision(this.target.pos, this.range, targetTeam)
         if (!collided.length) {
             this.isDone = true
             return
@@ -64,7 +64,10 @@ function Arc(target, team) {
         this.hit.push(this.target)
         if (this.target.name == 'zombie') {
             this.charges -= 0.5
-        } else {
+        } else if (this.target.name == 'castlewall') {
+            this.charges -= 3
+        } 
+        else {
             this.charges--
         }
 
