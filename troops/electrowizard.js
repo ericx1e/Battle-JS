@@ -3,7 +3,7 @@ function EWizard(x, y, team) {
     this.reset = function () {
         this.name = 'ewizard'
         this.team = team
-        this.cost = 60
+        this.cost = BALANCE.ewizard.cost
         this.projectiles = team == 'red' ? redProjectiles : blueProjectiles
 
         this.vel = createVector(0, 0)
@@ -11,11 +11,11 @@ function EWizard(x, y, team) {
         this.speed = this.size / 15;
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 50
+        this.maxHitpoints = BALANCE.ewizard.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
         this.attackPower = 0
-        this.attackSpeed = 180 //number of frames between attacks
+        this.attackSpeed = BALANCE.ewizard.period //number of frames between attacks
         this.attackRange = this.size * 30
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
@@ -29,6 +29,8 @@ function EWizard(x, y, team) {
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
+        if (this._shadowFrame != frameCount) drawUnitShadow(this.size) // feet on the field (battle runs a shadow pass first)
+        translate(0, -bodyLift(this.size)) // the body stands above it
 
         if (healthBars) {
             strokeWeight(this.size / 5)
@@ -42,7 +44,7 @@ function EWizard(x, y, team) {
         drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
-        rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
+        rotate(unitFacing(this))
         drawSettings(team, tranparency, this.size)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
@@ -86,8 +88,10 @@ function EWizard(x, y, team) {
 
         updateTarget(this, foes)
 
-        moveUnit(this)
-        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
+        if (!rangedKite(this)) {
+            moveUnit(this)
+        }
+        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange + reachBonus(this.target))) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }
@@ -103,6 +107,9 @@ function EWizard(x, y, team) {
 
 
     this.attack = function () {
-        this.projectiles.push(new Bolt(this.pos, this.target.pos, team))
+        spawnRing(this.pos.x, this.pos.y, team, this.size * 2)
+        let bolt = new Bolt(this.pos, this.target.pos, team)
+        bolt.dmgMult = this.dmgMult || 1
+        this.projectiles.push(bolt)
     }
 }

@@ -3,7 +3,7 @@ function Necromancer(x, y, team) {
     this.reset = function () {
         this.name = 'necromancer'
         this.team = team
-        this.cost = 60
+        this.cost = BALANCE.necromancer.cost
         this.allies = team == 'red' ? redTroops : blueTroops
         this.toRemove = team == 'red' ? redToRemove : blueToRemove
 
@@ -12,11 +12,11 @@ function Necromancer(x, y, team) {
         this.speed = this.size / 25;
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 100
+        this.maxHitpoints = BALANCE.necromancer.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
         this.attackPower = 0
-        this.attackSpeed = 1 //number of frames between attacks
+        this.attackSpeed = BALANCE.necromancer.period //number of frames between attacks
         this.attackRange = this.size * 25
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
         // this.drawSpeed = this.size * 2
@@ -31,6 +31,8 @@ function Necromancer(x, y, team) {
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
+        if (this._shadowFrame != frameCount) drawUnitShadow(this.size) // feet on the field (battle runs a shadow pass first)
+        translate(0, -bodyLift(this.size)) // the body stands above it
 
         if (healthBars) {
             strokeWeight(this.size / 5)
@@ -102,7 +104,7 @@ function Necromancer(x, y, team) {
 
         if (this.hitpoints <= 0) {
             for (let i = 0; i < 10; i++) {
-                this.allies.push(new Zombie(this.pos.x + random(-this.size, this.size), this.pos.y + random(-this.size, this.size), team))
+                this.allies.push(makeTroop('zombie', this.pos.x + random(-this.size, this.size), this.pos.y + random(-this.size, this.size), team))
             }
             this.isDead = true
         }
@@ -132,13 +134,13 @@ function Necromancer(x, y, team) {
             if (dist < r && subject.name != 'zombie') {
                 this.allies.splice(index, 1)
                 removed++
-                this.toRemove.splice(index, 1)
+                this.toRemove.splice(i, 1)
                 i--
-                // this.allies.push(new Zombie(subject.pos.x, subject.pos.y, team))
-                this.allies.push(new Zombie(this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
+                // this.allies.push(makeTroop('zombie', subject.pos.x, subject.pos.y, team))
+                this.allies.push(makeTroop('zombie', this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
                 while (random(0, 1) > 0.6) {
-                    // this.allies.push(new Zombie(subject.pos.x, subject.pos.y, team))
-                    this.allies.push(new Zombie(this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
+                    // this.allies.push(makeTroop('zombie', subject.pos.x, subject.pos.y, team))
+                    this.allies.push(makeTroop('zombie', this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
                 }
             }
         }

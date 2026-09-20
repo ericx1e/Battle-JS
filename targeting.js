@@ -1,11 +1,46 @@
 function updateTarget(unit, foes) {
-    if (unit.target && unit.target !== unit && !unit.target.isDead) {
-        // Soft leash to prevent constant target swapping
+    if (unit.target && unit.target !== unit && !unit.target.isDead && !isIgnoredTarget(unit, unit.target)) {
+        const d2 = distSquared(unit.pos, unit.target.pos)
+
+        // committed: already at grips with this target — never peel away
+        // (structures count reach to their edge, or the wall would get
+        // chase-broken and blacklisted while being actively attacked)
+        if (d2 < sqr(unit.attackRange * 1.2 + reachBonus(unit.target))) {
+            unit._chaseTarget = undefined
+            return
+        }
+
+        // Soft leash to prevent constant target swapping…
         const leashR = (unit.attackRange || (width / 40)) * 6
-        if (distSquared(unit.pos, unit.target.pos) < leashR * leashR) return
+        if (d2 < leashR * leashR) {
+            // …but the leash BREAKS after a full second of chasing with zero
+            // net progress. this is what kills bait cheese: you can't kite a
+            // whole army around. (windowed check — robust to multiple calls per frame)
+            if (unit._chaseTarget !== unit.target) {
+                unit._chaseTarget = unit.target
+                unit._chaseD2 = d2
+                unit._chaseCheckFrame = battleFrameCount
+                return
+            }
+            if (battleFrameCount - unit._chaseCheckFrame < 60) return
+            if (d2 < unit._chaseD2 - 1) {
+                // real progress — refresh the window and keep chasing
+                unit._chaseD2 = d2
+                unit._chaseCheckFrame = battleFrameCount
+                return
+            }
+            // give up: blacklist the runner for a while and find a real fight
+            unit._ignore = unit.target
+            unit._ignoreUntil = battleFrameCount + 240
+        }
     }
 
+    unit._chaseTarget = undefined
     updateToClosestTarget(unit, foes)
+}
+
+function isIgnoredTarget(unit, other) {
+    return unit._ignore === other && battleFrameCount < unit._ignoreUntil
 }
 
 // function updateTarget(unit, foes) { // TODO: integrate spacial grid ?
@@ -48,10 +83,11 @@ function updateToClosestTarget(unit, foes) {
 
             const arr = (foeTeam === 'red') ? cell.red : cell.blue;
 
-            for (let i = 0; i < cell.length; i++) {
+            for (let i = 0; i < arr.length; i++) {
                 const other = arr[i];
                 if (other === unit || other.isDead) continue;
                 if (other.team === unit.team) continue;
+                if (isIgnoredTarget(unit, other)) continue;
 
                 // Exact circle check
                 const d2 = distSquared(unit.pos, other.pos);
@@ -75,9 +111,19 @@ function closestScan(unit, foes) {
     let best = Infinity
     for (let i = 0; i < foes.length; i++) {
         const f = foes[i]
-        if (f.isDead) continue
+        if (f.isDead || isIgnoredTarget(unit, f)) continue
         const d = distSquared(unit.pos, f.pos)
         if (d < best) { best = d; target = f }
+    }
+    if (!target) {
+        // only blacklisted foes remain — grudgingly chase them after all
+        unit._ignore = undefined
+        for (let i = 0; i < foes.length; i++) {
+            const f = foes[i]
+            if (f.isDead) continue
+            const d = distSquared(unit.pos, f.pos)
+            if (d < best) { best = d; target = f }
+        }
     }
     unit.target = target || unit
 }

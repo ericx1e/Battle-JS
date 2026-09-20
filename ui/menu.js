@@ -6,13 +6,23 @@ function Menu() {
 
     let buttonsPerRow = 3
 
-    let buttonSize = this.h / 15
-    let troopButtonIds
+    let buttonSize = this.h / 16
+    let troopGroups
 
+    // grouped by role so the drawer reads as a roster, not a flat grid of 12
+    // icons — frontline tanks, mobile strikers, ranged casters, support, and
+    // the capstone gets its own row, set apart with a small gap and (in
+    // button.js) a distinct highlighted border
     if (mode == 'autochess') {
-        troopButtonIds = []
+        troopGroups = []
     } else {
-        troopButtonIds = ['soldier', 'archer', 'spear', 'necromancer', 'summoner', 'ewizard', 'shield', 'healer', 'reaper']
+        troopGroups = [
+            ['soldier', 'knight', 'phalanx', 'shield'],
+            ['charger', 'reaver', 'reaper'],
+            ['archer', 'ewizard', 'fwizard'],
+            ['summoner'],
+            ['warlock'],
+        ]
     }
 
     let utilButtonIds
@@ -29,17 +39,28 @@ function Menu() {
 
     this.buttons.push(new Button(this.w / 2, buttonSize / 1.5, buttonSize * 2, buttonSize, 'return_to_title'))
 
-    // Button locations are relative to menu location
-    for (let i = 0; i < troopButtonIds.length; i++) {
-        this.buttons.push(new Button(this.w / 2 - buttonsPerRow * buttonSize / 2 + 1.5 * buttonSize * int(i % buttonsPerRow), 2 * buttonSize + int(i / buttonsPerRow) * buttonSize * 1.5, buttonSize, buttonSize, troopButtonIds[i]));
+    // Button locations are relative to menu location. Groups wrap at
+    // buttonsPerRow same as before; a small gap is added BETWEEN groups so
+    // roles read as visually distinct clusters instead of one undivided grid.
+    let row = 0
+    for (const group of troopGroups) {
+        for (let i = 0; i < group.length; i++) {
+            this.buttons.push(new Button(
+                this.w / 2 - buttonsPerRow * buttonSize / 2 + 1.5 * buttonSize * int(i % buttonsPerRow),
+                2 * buttonSize + (row + Math.floor(i / buttonsPerRow)) * buttonSize * 1.5,
+                buttonSize, buttonSize, group[i]
+            ));
+        }
+        row += Math.ceil(group.length / buttonsPerRow) + 0.35
     }
 
     for (let i = 0; i < utilButtonIds.length; i++) {
-        this.buttons.push(new Button(this.w / 2 - 3 * buttonSize / 2 + 1.5 * buttonSize * int(i % 3), this.h * 7 / 10 + int(i / 3) * buttonSize * 1.5, buttonSize, buttonSize, utilButtonIds[i]));
+        this.buttons.push(new Button(this.w / 2 - 3 * buttonSize / 2 + 1.5 * buttonSize * int(i % 3), this.h * 0.8 + int(i / 3) * buttonSize * 1.5, buttonSize, buttonSize, utilButtonIds[i]));
     }
 
-    let startButtonSize = buttonSize * 1.5
-    this.buttons.push(new Button(this.w / 2, this.h * 9 / 10, startButtonSize, startButtonSize, 'start'))
+    // back in the drawer (the persistent bottom-center version was in the way)
+    let startButtonSize = buttonSize * 1.3
+    this.buttons.push(new Button(this.w / 2, this.h * 0.94, startButtonSize, startButtonSize, 'start'))
 
     this.show = function () {
         push()

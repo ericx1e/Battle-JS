@@ -11,14 +11,19 @@ function Bolt(start, target, team) {
 
     this.show = function () {
         let randMag = this.size / 4
+        const lift = bodyLift(width / 100) // flies at the standing plane
+        // crackling shadow on the ground beneath the bolt
+        noStroke()
+        fill(0, 60 + random(-15, 15))
+        ellipse(this.pos.x, this.pos.y, this.size * 1.5, this.size * 0.5)
         drawSettings(team)
         noFill()
         beginShape()
-        vertex(this.pos.x - drawVec.x, this.pos.y - drawVec.y)
-        vertex(this.pos.x - drawVec.x / 2 + random(-randMag, randMag), this.pos.y - drawVec.y / 2 + random(-randMag, randMag))
-        vertex(this.pos.x + random(-randMag, randMag), this.pos.y + random(-randMag, randMag))
-        vertex(this.pos.x + drawVec.x / 2 + random(-randMag, randMag), this.pos.y + drawVec.y / 2 + random(-randMag, randMag))
-        vertex(this.pos.x + drawVec.x, this.pos.y + drawVec.y)
+        vertex(this.pos.x - drawVec.x, this.pos.y - drawVec.y - lift)
+        vertex(this.pos.x - drawVec.x / 2 + random(-randMag, randMag), this.pos.y - drawVec.y / 2 + random(-randMag, randMag) - lift)
+        vertex(this.pos.x + random(-randMag, randMag), this.pos.y + random(-randMag, randMag) - lift)
+        vertex(this.pos.x + drawVec.x / 2 + random(-randMag, randMag), this.pos.y + drawVec.y / 2 + random(-randMag, randMag) - lift)
+        vertex(this.pos.x + drawVec.x, this.pos.y + drawVec.y - lift)
         endShape()
     }
 
@@ -30,7 +35,7 @@ function Bolt(start, target, team) {
             let other = collided[0]
             takeDamage(other, this.damage)
             for (let i = 0; i < 5; i++) {
-                this.forces.push(new Arc(other, team))
+                this.forces.push(new Arc(other, team, this.dmgMult))
             }
             return true
         }

@@ -3,22 +3,17 @@ function Soldier(x, y, team) {
     this.reset = function () {
         this.name = 'soldier'
         this.team = team
-        this.cost = 10
+        this.cost = BALANCE.soldier.cost
         this.vel = createVector(0, 0)
         this.size = width / 100
         this.speed = this.size / 10;
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 140
-        if (mode == 'autochess') {
-            if (autochessEngine && autochessEngine.buffs.includes('soldier_health') && team == 'red') {
-                this.maxHitpoints *= 1.5
-            }
-        }
+        this.maxHitpoints = BALANCE.soldier.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
-        this.attackPower = 10
-        this.attackSpeed = 40 //number of frames between attacks
+        this.attackPower = BALANCE.soldier.atk
+        this.attackSpeed = BALANCE.soldier.period //number of frames between attacks
         this.attackRange = this.size * 1.5
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
 
@@ -35,6 +30,8 @@ function Soldier(x, y, team) {
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
+        if (this._shadowFrame != frameCount) drawUnitShadow(this.size) // feet on the field (battle runs a shadow pass first)
+        translate(0, -bodyLift(this.size)) // the body stands above it
 
         if (healthBars) {
             strokeWeight(this.size / 5)
@@ -48,12 +45,20 @@ function Soldier(x, y, team) {
         drawSettings(team, tranparency, this.size)
         noFill()
         arc(0, 0, this.size, this.size, PI / 2 - PI * this.hitpoints / this.maxHitpoints, PI / 2 + PI * this.hitpoints / this.maxHitpoints, OPEN)
-        rotate(atan2(this.target.pos.y - this.pos.y, this.target.pos.x - this.pos.x))
-        rotate(this.attackRotate)
-        if (this.attackRotate > 0) {
-            this.attackRotate *= 0.90
-            this.attackRotate -= PI / 50
+        rotate(unitFacing(this))
+        // the cut: wind back, whip through, follow through — with a body
+        // lunge into the blow and a streak along the carved arc
+        const swingPeak = PI / 3
+        const swordRest = this.swordRest !== undefined ? this.swordRest : PI / 4 // guard pose knob
+        let swingRot = 0
+        if (this._swingT !== undefined) {
+            swingRot = swingCurve(this._swingT, swingPeak, 3, 2, 10)
+            const pastImpact = this._swingT >= 5
+            if (++this._swingT > 15) this._swingT = undefined
+            translate(this.size * 0.15 * swingRot / swingPeak, 0)
+            if (pastImpact) drawSwingStreak(this.size, swingRot, swingPeak, this.size * 0.95, swordRest - HALF_PI)
         }
+        rotate(swingRot)
         drawSettings(team, tranparency, this.size)
         noStroke()
         ellipse(0, 0, this.size - this.size * this.takingDamageFrames / 100, this.size - this.size * this.takingDamageFrames / 100)
@@ -62,7 +67,7 @@ function Soldier(x, y, team) {
         let s = this.size / 4
         push()
         translate(this.size / 2, 0)
-        rotate(PI / 4)
+        rotate(swordRest)
         noFill()
         line(0, s, 0, -3 * s)
         line(-s / 3, 0, s / 3, 0)
@@ -98,11 +103,21 @@ function Soldier(x, y, team) {
         updateTarget(this, foes)
 
         moveUnit(this)
-        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange)) {
+        if (distSquared(this.pos, this.target.pos) < sqr(this.attackRange + reachBonus(this.target))) {
             if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
                 this.attack();
             }
             // this.checkCollision(allies.concat(foes))
+        }
+
+        // a swing begun earlier LANDS now, as the blade comes through — the
+        // target can die or slip away during the wind-up, and so can we
+        if (this._strikeFrame !== undefined && battleFrameCount >= this._strikeFrame) {
+            this._strikeFrame = undefined
+            const t = this._strikeTarget
+            if (t && !t.isDead && distSquared(this.pos, t.pos) < sqr((this.attackRange + reachBonus(t)) * 1.3)) {
+                takeDamage(t, this.attackPower, this)
+            }
         }
 
         // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
@@ -114,7 +129,8 @@ function Soldier(x, y, team) {
 
 
     this.attack = function () {
-        this.attackRotate = PI / 3
-        takeDamage(this.target, this.attackPower)
+        this._swingT = 0 // kick off the wind-up/snap/recover swing (see swingCurve)
+        this._strikeFrame = battleFrameCount + 5 // damage lands at the swing's impact, not the wind-up
+        this._strikeTarget = this.target
     }
 }

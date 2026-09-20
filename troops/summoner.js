@@ -3,7 +3,7 @@ function Summoner(x, y, team) {
     this.reset = function () {
         this.name = 'summoner'
         this.team = team
-        this.cost = 80
+        this.cost = BALANCE.summoner.cost
         this.allies = team == 'red' ? redTroops : blueTroops
 
         this.vel = createVector(0, 0)
@@ -11,13 +11,14 @@ function Summoner(x, y, team) {
         this.speed = this.size / 25;
         this.maxSpeed = this.speed;
         this.target = this
-        this.maxHitpoints = 100
+        this.maxHitpoints = BALANCE.summoner.hp
         this.hitpoints = this.maxHitpoints
         this.targetHitpoints = this.hitpoints
         this.attackPower = 0
-        this.attackSpeed = 90 //number of frames between attacks
+        this.attackSpeed = BALANCE.summoner.period //number of frames between attacks
         this.attackRange = this.size * 30
         this.firstAttackFrame = parseInt(random(0, this.attackSpeed))
+        this._nextSpawnFrame = 0
         // this.drawSpeed = this.size * 2
 
         this.takingDamageFrames = 0 //animation for getting hit
@@ -30,6 +31,8 @@ function Summoner(x, y, team) {
     this.show = function (tranparency) {
         push()
         translate(this.pos.x, this.pos.y)
+        if (this._shadowFrame != frameCount) drawUnitShadow(this.size) // feet on the field (battle runs a shadow pass first)
+        translate(0, -bodyLift(this.size)) // the body stands above it
 
         if (healthBars) {
             strokeWeight(this.size / 5)
@@ -87,15 +90,17 @@ function Summoner(x, y, team) {
 
         let removed = 0
 
-        moveUnit(this)
-        if ((battleFrameCount - this.firstAttackFrame) % this.attackSpeed == 0) {
+        if (!rangedKite(this)) {
+            moveUnit(this)
+        }
+        if (battleFrameCount >= this._nextSpawnFrame) {
             removed = this.attack();
         }
         // this.hitpoints = lerp1(this.hitpoints, this.targetHitpoints, 0.1)
 
         if (this.hitpoints <= 0) {
             for (let i = 0; i < 5; i++) {
-                this.allies.push(new Zombie(this.pos.x + random(-this.size, this.size), this.pos.y + random(-this.size, this.size), team))
+                this.allies.push(makeTroop('zombie', this.pos.x + random(-this.size, this.size), this.pos.y + random(-this.size, this.size), team))
             }
             this.isDead = true
         }
@@ -107,8 +112,33 @@ function Summoner(x, y, team) {
 
 
     this.attack = function () {
-        for (let i = 0; i < 3; i++) {
-            this.allies.push(new Zombie(this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team))
+        // the pack is bounded — and it is a TEAM resource: the dark art draws
+        // from one well, so stacked summoners sustain sqrt-more, not linearly
+        // more (a lone summoner keeps its full pack; 4 together get 2×, not 4×).
+        // in a grinding fight the front dies constantly, so the feeding never
+        // stops — but nobody banks an ever-growing horde.
+        let pack = 0, lords = 0
+        for (let i = 0; i < this.allies.length; i++) {
+            const a = this.allies[i]
+            if (!a || a.isDead) continue
+            if (a._master) pack++
+            if (a.name == 'summoner') lords++
+        }
+        const teamCap = ceil(BALANCE.summoner.packCap * Math.sqrt(max(1, lords)))
+        const room = min(BALANCE.summoner.spawnCount, teamCap - pack)
+        if (room <= 0) {
+            this._nextSpawnFrame = battleFrameCount + 30 // full — watch for losses
+            return
+        }
+        // bursty feeder: a depleted pack is replaced FAST (the dramatic part),
+        // but a topped-up pack only trickles — the stream can't outpace what a
+        // real army cuts down
+        this._nextSpawnFrame = battleFrameCount + BALANCE.summoner.period * (1 + 2 * pack / teamCap)
+        spawnRing(this.pos.x, this.pos.y, team, this.size * 2)
+        for (let i = 0; i < room; i++) {
+            const z = makeTroop('zombie', this.pos.x + 60 * this.vel.x + random(-this.size * 2, this.size * 2), this.pos.y + 60 * this.vel.y + random(-this.size * 2, this.size * 2), team)
+            z._master = this // marks it as summoned (counts against the team pack)
+            this.allies.push(z)
         }
     }
 }

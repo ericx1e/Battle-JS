@@ -1,10 +1,10 @@
-function Arc(target, team) {
+function Arc(target, team, dmgMult) {
     this.name = 'arc'
 
     this.target = target
     this.nextTarget;
     this.charges = 12
-    this.damage = 10
+    this.damage = 10 * (dmgMult || 1)
     this.range = width / 25
 
     this.isDone

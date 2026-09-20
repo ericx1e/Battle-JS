@@ -53,12 +53,17 @@ function placeUnitInGrid(unit) {
 //     });
 // }
 
-function updateGrid(allUnits) {
+function updateGrid(redUnits, blueUnits) {
     beginGridFrame();
+    placeTeamInGrid(redUnits);
+    placeTeamInGrid(blueUnits);
+}
+
+function placeTeamInGrid(units) {
     const cs = cellSize;
 
-    for (let i = 0; i < allUnits.length; i++) {
-        const u = allUnits[i];
+    for (let i = 0; i < units.length; i++) {
+        const u = units[i];
         if (!u || u.isDead) continue;
 
         const r = (u.size || 0) * 0.5;
@@ -88,9 +93,24 @@ function moveUnit(unit) {
     if (unit.retreating) {
         unit.pos.add(unit.vel)
     }
-    if (distSquared(unit.pos, unit.target.pos) > sqr(unit.attackRange * 0.9)) {
-        unit.vel = p5.Vector.sub(unit.target.pos, unit.pos).limit(unit.speed)
+    const dTarget2 = distSquared(unit.pos, unit.target.pos)
+    if (dTarget2 > sqr(unit.attackRange * 0.9 + reachBonus(unit.target))) {
+        let spd = unit.speed
+        let dy = unit.target.pos.y - unit.pos.y
+        if (dTarget2 > sqr(width / 8)) {
+            // melee charge: sprint while the fight is still far away, so archers
+            // don't get a free minute of volleys during the approach
+            if (unit.attackRange < unit.size * 5) {
+                spd *= 1.4
+            }
+            // hold your file: while the enemy is distant, advance as a broad
+            // line (damped sideways drift) instead of funneling into one clump.
+            // full convergence resumes near contact.
+            dy *= 0.08
+        }
+        unit.vel.set(unit.target.pos.x - unit.pos.x, dy).limit(spd)
         unit.pos.add(unit.vel)
+        stampHeading(unit)
     }
     checkUnitCollision(unit)
     checkBoundaries(unit)
@@ -99,21 +119,86 @@ function moveUnit(unit) {
     // }
 }
 
-function knockbackUnit(unit) {
-    if (unit.name == 'shield' || unit.name == 'castlewall') {
-        return
+// units LOOK where they WALK. a fresh heading (stamped by actual movement this
+// frame or last) wins; otherwise face the target — standing troops aim at the
+// enemy, and kiting archers keep facing forward because kiting never stamps.
+function stampHeading(unit) {
+    unit._heading = atan2(unit.vel.y, unit.vel.x)
+    unit._headingFrame = frameCount
+}
+
+function unitFacing(u) {
+    let desired
+    if (u._headingFrame >= frameCount - 1) desired = u._heading
+    else desired = atan2(u.target.pos.y - u.pos.y, u.target.pos.x - u.pos.x)
+
+    // ease toward the desired angle along the shortest arc, so retargeting and
+    // course changes read as a WHEEL instead of a snap. a stale facing (just
+    // spawned, or not drawn for a while) snaps straight to the new direction.
+    if (u._facing === undefined || frameCount - u._facingFrame > 10) {
+        u._facing = desired
+    } else if (u._facingFrame < frameCount) { // turn once per frame (attack + draw may both ask)
+        let d = (desired - u._facing) % TWO_PI
+        if (d > PI) d -= TWO_PI
+        if (d < -PI) d += TWO_PI
+        u._facing += d * 0.2
+        // keep the accumulator wrapped so orbiting a target can't wind it up
+        if (u._facing > PI) u._facing -= TWO_PI
+        if (u._facing < -PI) u._facing += TWO_PI
     }
-    // let moveVector = p5.Vector.sub(foe.pos, this.pos).setMag(foe.speed * 2)
-    // foe.pos.add(moveVector)
-    unit.pos.add(p5.Vector.mult(unit.vel, -2))
-    unit.speed = -unit.maxSpeed / 2
-    moveUnit(unit)
+    u._facingFrame = frameCount
+    return u._facing
+}
+
+function isBraced(unit) {
+    return unit.name == 'shield' || unit.name == 'castlewall' || unit.name == 'phalanx' || unit.name == 'keep' || unit.name == 'knight'
+}
+
+// ranged units back away from anything that gets close, but backpedaling is
+// slow (60% speed) — determined melee WILL close the gap. they keep firing
+// while they give ground. returns true if the unit kited this frame.
+function rangedKite(unit) {
+    if (!unit.maxSpeed) return false
+    const comfort = unit.attackRange * 0.22
+    const foeTeam = unit.team == 'red' ? 'blue' : 'red'
+    const near = checkTeamCollision(unit.pos, comfort, foeTeam)
+    if (!near.length) return false
+    let nearest = near[0]
+    let best = Infinity
+    for (let i = 0; i < near.length; i++) {
+        const d2 = distSquared(unit.pos, near[i].pos)
+        if (d2 < best) { best = d2; nearest = near[i] }
+    }
+    unit.vel.set(unit.pos.x - nearest.pos.x, unit.pos.y - nearest.pos.y).limit(unit.speed * 0.6)
+    unit.pos.add(unit.vel)
+    checkUnitCollision(unit)
+    checkBoundaries(unit)
+    return true
+}
+
+// shove a unit directly AWAY from the source of the blow (not along its own
+// velocity — that could fling it anywhere). braced/immovable units hold.
+// strength is in victim-sizes; the negative speed is a stagger the unit must
+// recover from before it can close back in.
+function knockbackUnit(unit, fromPos, strength = 1) {
+    if (isBraced(unit) || isImmovable(unit) || !unit.maxSpeed) {
+        return // braced units hold their ground
+    }
+    const away = p5.Vector.sub(unit.pos, fromPos)
+    if (away.magSq() < 1e-9) away.set(1, 0)
+    unit.pos.add(away.setMag(unit.size * strength))
+    // stagger scales with the blow: speed recovers at maxSpeed/100 per frame,
+    // so a full-strength stagger costs ~1s of recoil, a light shove far less
+    unit.speed = min(unit.speed, -unit.maxSpeed / 2 * min(strength, 1))
+    checkUnitCollision(unit)
+    checkBoundaries(unit)
 }
 
 function moveUnitTowards(unit, dest) {
     if (distSquared(unit.pos, dest) > sqr(unit.attackRange * 0.9)) {
-        unit.vel = p5.Vector.sub(dest, unit.pos).limit(unit.speed)
+        unit.vel.set(dest.x - unit.pos.x, dest.y - unit.pos.y).limit(unit.speed)
         unit.pos.add(unit.vel)
+        stampHeading(unit)
     }
     checkUnitCollision(unit)
     checkBoundaries(unit)
@@ -208,7 +293,20 @@ function checkCollision(sourcePos, radius) {
 
 
 function isImmovable(e) {
-    return e && (e.name === 'shield' || e.name === 'castlewall' || e.name === 'wall');
+    // a reaver mid-leap is flying above the collision plane — nothing on the
+    // ground can shove it off course
+    return e && (e.name === 'shield' || e.name === 'castlewall' || e.name === 'wall' || e.name === 'keep' || e.name === 'barracks' || (e.name === 'reaver' && e._leaping > 0));
+}
+
+// structures are hit at their EDGE: a wall's body is wider than a melee unit's
+// whole attack range, so a center-distance range check could never pass — the
+// troop would stand at the wall grinding forever without landing a blow.
+function isStructure(e) {
+    return e && (e.name === 'castlewall' || e.name === 'wall' || e.name === 'keep' || e.name === 'barracks');
+}
+
+function reachBonus(target) {
+    return isStructure(target) ? target.size / 2 : 0
 }
 
 function isProtectedFrom(target, pusher) {
@@ -216,6 +314,11 @@ function isProtectedFrom(target, pusher) {
     if (!target || !pusher) return false;
     if (!isImmovable(pusher) && isImmovable(target)) return true;
     if (target.name === 'summoner' && pusher.name === 'zombie') return true; // zombies can't shove summoners
+    // a charger with momentum BREAKS THROUGH its own crowd — friendly bodies
+    // part for the horse instead of boxing it in behind the line. enemy
+    // bodies still block it (soldier walls stay the intended counter), and
+    // so does masonry: no horse shoves a castle wall out of its lane.
+    if (target.name === 'charger' && target.gallop >= 20 && target.team === pusher.team && !isImmovable(pusher)) return true;
     return false;
 }
 
@@ -332,15 +435,15 @@ function checkUnitCollision(unit) {
 
 function checkBoundaries(unit) {
     if (unit.pos.x > width) {
-        unit.pos.add(createVector(-unit.size / 2, 0))
+        unit.pos.x -= unit.size / 2
     }
     if (unit.pos.x < 0) {
-        unit.pos.add(createVector(unit.size / 2, 0))
+        unit.pos.x += unit.size / 2
     }
     if (unit.pos.y > height) {
-        unit.pos.add(createVector(0, -unit.size / 2))
+        unit.pos.y -= unit.size / 2
     }
     if (unit.pos.y < 0) {
-        unit.pos.add(createVector(0, unit.size / 2))
+        unit.pos.y += unit.size / 2
     }
 }
